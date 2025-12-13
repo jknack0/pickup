@@ -11,18 +11,18 @@ dotenv.config({ path: envPath });
 const app = express();
 const port = process.env.PORT || 3000;
 
-
 app.use(cors());
 app.use(express.json());
 
 app.get('/', (req: Request, res: Response) => {
-    res.send('Hello from Express Server!');
+  res.send('Hello from Express Server!');
 });
 
-mongoose.connect(process.env.MONGODB_URI as string)
-    .then(() => logger.info('Connected to MongoDB'))
-    .catch((err) => logger.error('Failed to connect to MongoDB', err));
+mongoose
+  .connect(process.env.MONGODB_URI as string)
+  .then(() => logger.info('Connected to MongoDB'))
+  .catch((err) => logger.error('Failed to connect to MongoDB', err));
 
 app.listen(port, () => {
-    logger.info(`[server]: Server is running at http://localhost:${port}`);
+  logger.info(`[server]: Server is running at http://localhost:${port}`);
 });
