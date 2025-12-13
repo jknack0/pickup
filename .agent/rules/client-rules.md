@@ -3,6 +3,11 @@ trigger: always_on
 description: Frontend Development Guidelines
 ---
 
+---
+trigger: always_on
+description: Frontend Development Guidelines
+---
+
 ## 📜 Agent Rule Content Specification
 
 This document defines the rules for the **Antigravity System (AG)** within the fictional universe and the mandatory **Frontend Development Guidelines** for all related application work.
@@ -43,7 +48,7 @@ Development must strictly follow the **Atomic Design Methodology**. Before creat
 
 * **Atom:** The smallest reusable UI elements (e.g., `Button`, `Label`).
 * **Molecule:** Groups of Atoms functioning together (e.g., `SearchForm`, `PowerMetric`).
-* **Organism:** Distinct sections of the interface (e.g., `Header`, `AGGDiagnosticsPanel`).
+* **Organism:** Distinct sections of the interface (e.g., [Header](cci:1://file:///c:/Dev/pickup/client/src/components/molecules/AuthHeader/AuthHeader.tsx:7:0-26:2), `AGGDiagnosticsPanel`).
 * **Template:** Layout wireframes using Organisms.
 * **Page:** Instances of Templates populated with real data. **CRITICAL:** All page components MUST be located in `src/components/pages/`, NOT in `src/pages/`.
 
@@ -51,6 +56,9 @@ Development must strictly follow the **Atomic Design Methodology**. Before creat
 
 ### 2.2 Quality Assurance and Best Practices
 
-* **Unit Testing:** **Always create simple unit tests** when a new Atom, Molecule, Organism, Template, or Page is created. **EXPLICIT REQUIREMENT:** You must include a corresponding `.test.tsx` file for every new Molecule and Organism created.
+* **Unit Testing:** **MANDATORY:** You **MUST** create a corresponding [.test.tsx](cci:7://file:///c:/Dev/pickup/client/src/App.test.tsx:0:0-0:0) file **IMMEDIATELY** whenever you create a new Atom, Molecule, Organism, Template, or Page.
+    * **NO EXCUSES:** Do not wait for a separate task. Do not ask for permission. If you create `Foo.tsx`, you MUST create `Foo.test.tsx` in the same tool execution cycle.
+    * **Simplicity:** Tests can be simple "renders without crashing" or "checks for text" tests initially, but they MUST exist to prevent regression.
+* **State Management:** **Use React Query** for all server state (User, Data). Avoid global Context for data fetching.
 * **Code Abstraction:** **Always check for and abstract away duplicate code** to ensure a DRY (Don't Repeat Yourself) codebase.
 * **React Principles:** **Always use React best practices** (e.g., efficient state management, appropriate use of hooks, functional components).

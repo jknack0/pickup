@@ -2,6 +2,11 @@
   "name": "pickup-root",
   "version": "1.0.0",
   "private": true,
+  "workspaces": [
+    "packages/*",
+    "client",
+    "server"
+  ],
   "scripts": {
     "dev": "concurrently -n \"SERVER,CLIENT\" -c \"blue,magenta\" \"nodemon --watch server --exec ts-node --project server/tsconfig.json server/src/index.ts\" \"npm run dev --prefix client\"",
     "install:all": "npm install && npm install --prefix server && npm install --prefix client",
@@ -22,6 +27,9 @@
     "server/**/*.ts": [
       "npm run lint:staged --prefix server",
       "npm run test:staged --prefix server"
+    ],
+    "packages/shared/**/*.ts": [
+      "npm run build --workspace=@pickup/shared"
     ]
   }
 }

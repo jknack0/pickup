@@ -1,15 +1,29 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
 import { Signup } from './Signup';
-import { BrowserRouter } from 'react-router-dom';
+
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
+
+const renderWithClient = (ui: React.ReactNode) => {
+  const testClient = createTestQueryClient();
+  return render(
+    <QueryClientProvider client={testClient}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>,
+  );
+};
 
 describe('Signup Page', () => {
   it('renders the signup form', () => {
-    render(
-      <BrowserRouter>
-        <Signup />
-      </BrowserRouter>,
-    );
+    renderWithClient(<Signup />);
+
     expect(screen.getByRole('heading', { name: /sign up/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/full name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();

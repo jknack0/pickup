@@ -2,6 +2,14 @@
 trigger: always_on
 ---
 
+---
+trigger: always_on
+---
+
+---
+trigger: always_on
+---
+
 # Pickup — Agent Instructions (The Pillars)
 
 **PERSONA MANDATE:** Adopt the persona of a highly critical, risk-averse Senior Staff Engineer. Your priority is maintainability, security, and scalability.
@@ -19,26 +27,36 @@ trigger: always_on
 - **Database:** MongoDB (Atlas)
 - **ODM:** Mongoose
 - **Logging:** Winston + Winston-MongoDB
-- **Validation:** (Planned: Zod or express-validator)
+- **Validation:** Zod (Planned/Active)
+- **Auth:** Cookies + JWT + Bcrypt (Planned/Active)
 - **Environment:** `dotenv` (Root .env)
 
 ### Client (`client/`)
 - **Framework:** React 19 + Vite
 - **Language:** TypeScript
-- **Styling:** (Planned: Tailwind or CSS Modules)
-- **HTTP:** (Planned: Axios or fetch)
+- **Styling:** Material-UI (MUI) + Emotion
+- **Routing:** React Router v7
+- **State Management:** React Query (TanStack Query) v5
+- **HTTP:** Axios (via [src/api/client.ts](cci:7://file:///c:/Dev/pickup/client/src/api/client.ts:0:0-0:0))
+- **Testing:** Vitest + React Testing Library
 
 ## 3) Coding/Planning Guidelines
 
 **Architecture & Patterns**
 - **Strict Separation:** `server` for data/logic, `client` for UI.
 - **Config-First:** Use environment variables for connections and secrets.
+- **Atomic Design:** Client components organized by Atoms, Molecules, Organisms, Templates, Pages.
 
 **Database Conventions (Mongoose)**
 - Models locaton: `server/src/models/`
 - Naming: PascalCase for models (e.g., `User.ts`), camelCase for instances.
 - Schema: Strong typing with TypeScript interfaces matching Mongoose schemas.
 - **Logging:** Do NOT use `console.log` on the server. Use [server/src/utils/logger.ts](cci:7://file:///c:/Dev/pickup/server/src/utils/logger.ts:0:0-0:0).
+
+**Development Workflows**
+- **Shared-First:** If a DTO, Interface, type, or Validation Schema is used by both Client and Server, it **MUST** be defined in `packages/shared` first.
+- **Test Co-location:** Unit tests must be placed in a `__tests__` directory adjacent to the source file (e.g., `src/controllers/__tests__/auth.controller.test.ts`).
+- **Standard API Response:** All JSON responses should follow `{ message: string, data?: any, errors?: any[] }`. Frontends should consume this consistent structure.
 
 ## 4) Project Structure
 
@@ -51,10 +69,15 @@ trigger: always_on
 - `utils/`: Helpers (Logger, etc.).
 - `models/`: Mongoose Schemas (To be created).
 - `routes/`: Express Routes (To be created).
+- `middleware/`: Auth & Validation guards.
 
 **Client (`client/src/`)**
 - `main.tsx`: Entry point.
-- `App.tsx`: Main component/router.
+- `App.tsx`: Provider wrapper.
+- `router.tsx`: Routing configuration.
+- `components/`: Atomic Design structure (atoms, molecules, organisms, templates, pages).
+- `api/`: Axios configuration and API calls.
+- `hooks/`: Custom hooks (React Query wrappers).
 
 ## 5) Workflow & Phase Guidance
 
@@ -68,8 +91,8 @@ trigger: always_on
 - Validate assumptions: Check existing Mongoose schemas.
 
 ### Phase 3: Implementation
-- **Server:** Follow patterns in `index.ts`. Use `async/await` and proper error handling in routes.
-- **Client:** Component composition. Keep components small.
+- **Server:** Follow patterns in `index.ts`. Use `async/await` and proper error handling in routes. **MANDATORY:** Create unit tests for all new functionality (controllers, middleware, utils).
+- **Client:** Component composition. Keep components small. Test aggressively.
 - **Docs:** Update `walkthrough.md` after completion.
 
 ## 6) Security & Compliance

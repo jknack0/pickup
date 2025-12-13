@@ -1,0 +1,49 @@
+import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import User from '../User';
+
+let mongoServer: MongoMemoryServer;
+
+beforeAll(async () => {
+  mongoServer = await MongoMemoryServer.create();
+  const uri = mongoServer.getUri();
+  await mongoose.connect(uri);
+});
+
+afterAll(async () => {
+  await mongoose.disconnect();
+  await mongoServer.stop();
+});
+
+afterEach(async () => {
+  await User.deleteMany({});
+});
+
+describe('User Model', () => {
+  it('should hash password on save', async () => {
+    const user = new User({
+      name: 'Test User',
+      email: 'test@example.com',
+      passwordHash: 'plainPassword123',
+    });
+
+    await user.save();
+    expect(user.passwordHash).not.toBe('plainPassword123');
+    expect(user.passwordHash).toHaveLength(60); // Bcrypt hash length
+  });
+
+  it('should compare password correctly', async () => {
+    const user = new User({
+      name: 'Test',
+      email: 'test@test.com',
+      passwordHash: 'secret',
+    });
+    await user.save();
+
+    const isMatch = await user.comparePassword('secret');
+    const isNotMatch = await user.comparePassword('wrong');
+
+    expect(isMatch).toBe(true);
+    expect(isNotMatch).toBe(false);
+  });
+});
