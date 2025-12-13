@@ -1,10 +1,13 @@
 import { useState } from 'react';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import { theme } from './theme';
 
 function App() {
   const [count, setCount] = useState(0);
 
   return (
-    <>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
       <div>
         <h1>Vite + React</h1>
       </div>
@@ -14,7 +17,7 @@ function App() {
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
       </div>
-    </>
+    </ThemeProvider>
   );
 }
 
