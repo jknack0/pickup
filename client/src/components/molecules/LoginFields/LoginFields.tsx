@@ -1,23 +1,9 @@
 import { TextField } from '../../atoms/TextField';
 import { Stack } from '../../atoms/Stack';
 
-export const SignupFields = () => {
+export const LoginFields = () => {
   return (
     <Stack spacing={2.5}>
-      <TextField
-        label="Full Name"
-        fullWidth
-        variant="outlined"
-        required
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            bgcolor: 'background.paper',
-            '&:hover fieldset': {
-              borderColor: 'primary.main',
-            },
-          },
-        }}
-      />
       <TextField
         label="Email Address"
         fullWidth

@@ -2,9 +2,9 @@ import { Paper } from '@mui/material';
 import { Button } from '../../atoms/Button';
 import { Box } from '../../atoms/Box';
 import { AuthHeader } from '../../molecules/AuthHeader';
-import { SignupFields } from '../../molecules/SignupFields';
+import { LoginFields } from '../../molecules/LoginFields';
 
-export const SignupForm = () => {
+export const LoginForm = () => {
   return (
     <Paper
       elevation={3}
@@ -16,9 +16,9 @@ export const SignupForm = () => {
         borderRadius: 2,
       }}
     >
-      <AuthHeader title="Sign Up" />
+      <AuthHeader title="Log In" subtitle="Welcome back! Please enter your details." />
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 3 }}>
-        <SignupFields />
+        <LoginFields />
         <Button
           variant="contained"
           size="large"
@@ -33,7 +33,7 @@ export const SignupForm = () => {
             boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
           }}
         >
-          Sign Up
+          Log In
         </Button>
       </Box>
     </Paper>

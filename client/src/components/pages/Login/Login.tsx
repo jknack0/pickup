@@ -1,10 +1,10 @@
 import { AuthLayout } from '../../templates/AuthLayout';
-import { SignupForm } from '../../organisms/SignupForm';
+import { LoginForm } from '../../organisms/LoginForm';
 
-export const Signup = () => {
+export const Login = () => {
   return (
     <AuthLayout>
-      <SignupForm />
+      <LoginForm />
     </AuthLayout>
   );
 };
