@@ -45,10 +45,12 @@ Development must strictly follow the **Atomic Design Methodology**. Before creat
 * **Molecule:** Groups of Atoms functioning together (e.g., `SearchForm`, `PowerMetric`).
 * **Organism:** Distinct sections of the interface (e.g., `Header`, `AGGDiagnosticsPanel`).
 * **Template:** Layout wireframes using Organisms.
-* **Page:** Instances of Templates populated with real data.
+* **Page:** Instances of Templates populated with real data. **CRITICAL:** All page components MUST be located in `src/components/pages/`, NOT in `src/pages/`.
+
+**CRITICAL:** When implementing any new UI feature, **you must attempt to break it down into these components on the first pass**. Do not build monolithic page components first and refactor later. Start with the atoms/molecules and build up.
 
 ### 2.2 Quality Assurance and Best Practices
 
-* **Unit Testing:** **Always create simple unit tests** when a new Atom, Molecule, Organism, Template, or Page is created.
+* **Unit Testing:** **Always create simple unit tests** when a new Atom, Molecule, Organism, Template, or Page is created. **EXPLICIT REQUIREMENT:** You must include a corresponding `.test.tsx` file for every new Molecule and Organism created.
 * **Code Abstraction:** **Always check for and abstract away duplicate code** to ensure a DRY (Don't Repeat Yourself) codebase.
 * **React Principles:** **Always use React best practices** (e.g., efficient state management, appropriate use of hooks, functional components).
