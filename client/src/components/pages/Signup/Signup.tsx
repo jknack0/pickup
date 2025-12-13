@@ -13,6 +13,8 @@ export const Signup = () => {
           justifyContent: 'center',
           flex: 1,
           width: '100%',
+          bgcolor: 'grey.100', // Add slight contrast
+          p: 2, // Ensure some spacing on small screens
         }}
       >
         <SignupForm />

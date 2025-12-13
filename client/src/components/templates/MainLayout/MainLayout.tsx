@@ -48,7 +48,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       </Drawer>
       <Box
         component="main"
-        sx={{ flexGrow: 1, p: 3, width: '100%', display: 'flex', flexDirection: 'column' }}
+        sx={{ flexGrow: 1, width: '100%', display: 'flex', flexDirection: 'column' }}
       >
         <Toolbar />
         {children}
