@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
-import { Box } from '../../atoms/Box';
-import { Container } from '../../atoms/Container';
+import { Box } from '@atoms/Box';
+import { Container } from '@atoms/Container';
 
 export interface AuthLayoutProps {
   children: ReactNode;

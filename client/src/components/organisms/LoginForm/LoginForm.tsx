@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Paper, Alert } from '@mui/material';
-import { Button } from '../../atoms/Button';
-import { AuthHeader } from '../../molecules/AuthHeader';
-import { LoginFields } from '../../molecules/LoginFields';
-import { useLogin } from '../../../hooks/useAuth';
+import { Button } from '@atoms/Button';
+import { AuthHeader } from '@molecules/AuthHeader';
+import { LoginFields } from '@molecules/LoginFields';
+import { useLogin } from '@hooks/useAuth';
 import type { LoginInput } from '@pickup/shared';
 
 export const LoginForm = () => {

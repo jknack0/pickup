@@ -1,5 +1,5 @@
-import { TextField } from '../../atoms/TextField';
-import { Stack } from '../../atoms/Stack';
+import { TextField } from '@atoms/TextField';
+import { Stack } from '@atoms/Stack';
 
 export const LoginFields = () => {
   return (

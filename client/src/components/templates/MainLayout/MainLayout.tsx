@@ -1,13 +1,13 @@
 import { type ReactNode } from 'react';
-import { AppBar } from '../../atoms/AppBar';
-import { Toolbar } from '../../atoms/Toolbar';
-import { Typography } from '../../atoms/Typography';
-import { Drawer } from '../../atoms/Drawer';
-import { Box } from '../../atoms/Box';
-import { List } from '../../atoms/List';
-import { ListItem } from '../../atoms/ListItem';
-import { ListItemButton } from '../../atoms/ListItemButton';
-import { ListItemText } from '../../atoms/ListItemText';
+import { AppBar } from '@atoms/AppBar';
+import { Toolbar } from '@atoms/Toolbar';
+import { Typography } from '@atoms/Typography';
+import { Drawer } from '@atoms/Drawer';
+import { Box } from '@atoms/Box';
+import { List } from '@atoms/List';
+import { ListItem } from '@atoms/ListItem';
+import { ListItemButton } from '@atoms/ListItemButton';
+import { ListItemText } from '@atoms/ListItemText';
 
 const drawerWidth = 240;
 

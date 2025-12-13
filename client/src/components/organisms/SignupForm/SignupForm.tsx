@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Paper, Alert } from '@mui/material';
-import { Button } from '../../atoms/Button';
-import { AuthHeader } from '../../molecules/AuthHeader';
-import { SignupFields } from '../../molecules/SignupFields';
-import { useRegister } from '../../../hooks/useAuth';
+import { Button } from '@atoms/Button';
+import { AuthHeader } from '@molecules/AuthHeader';
+import { SignupFields } from '@molecules/SignupFields';
+import { useRegister } from '@hooks/useAuth';
 import type { RegisterInput } from '@pickup/shared';
 
 export const SignupForm = () => {
