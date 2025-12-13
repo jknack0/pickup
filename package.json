@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "private": true,
     "scripts": {
-        "dev": "concurrently -n \"SERVER,CLIENT\" -c \"blue,magenta\" \"nodemon --watch server --project server/tsconfig.json server/src/index.ts\" \"npm run dev --prefix client\"",
+        "dev": "concurrently -n \"SERVER,CLIENT\" -c \"blue,magenta\" \"nodemon --watch server --exec ts-node --project server/tsconfig.json server/src/index.ts\" \"npm run dev --prefix client\"",
         "install:all": "npm install && npm install --prefix server && npm install --prefix client"
     },
     "devDependencies": {

@@ -1,0 +1,54 @@
+---
+trigger: model_decision
+description: Frontend Development Guidelines
+---
+
+## 📜 Agent Rule Content Specification
+
+This document defines the rules for the **Antigravity System (AG)** within the fictional universe and the mandatory **Frontend Development Guidelines** for all related application work.
+
+---
+
+## 1. ⚙️ Antigravity (AG) System Rules
+
+These rules govern the physical characteristics, generation, and limitations of the Antigravity force.
+
+### 1.1 Fundamentals and Generation
+
+| Rule Name | Description | Key Principles |
+| :--- | :--- | :--- |
+| **Nature of AG** | AG is a **generated force field** that directly opposes local planetary gravity. | AG does not nullify mass; it only negates the *effect* of gravity. Mass and inertia are retained. |
+| **Generator (AGG)** | AG is produced by a specialized **Antigravity Generator (AGG)**. | Requires a rare, high-energy catalyst (e.g., "Fluxite Crystals") and significant power. |
+| **Energy Consumption** | AG field generation is **energy-intensive**. | Power draw is directly proportional to the field's size and strength. |
+| **Inertia Retention** | Objects retain their **mass and inertia**. | A separate propulsion system is required for acceleration, deceleration, and steering. |
+
+### 1.2 Limitations and Constraints
+
+| Constraint | Description | Impact on Design/Scenario |
+| :--- | :--- | :--- |
+| **Maximum Load** | Every AGG has a **maximum mass threshold** it can lift. | Exceeding the limit causes the AG field to fluctuate or collapse. |
+| **Field Shape/Range**| The field is localized and typically drops off rapidly beyond a certain radius. | Can be shaped (dome, cone, bubble) but requires more power for larger fields. |
+| **Interference** | AG fields can be **blocked** by specific dense, specialized materials. | Opposing AG fields create a **destructive interference zone** that momentarily disables both fields. |
+| **Velocity Limit** | There is a practical **speed limit** for AG travel close to a planetary body. | Above this limit, the AG field becomes unstable or the power draw exceeds capacity. |
+
+---
+
+## 2. ⚛️ Frontend Development Guidelines
+
+These rules are mandatory for all frontend work related to the AG Status Dashboard or any future component, ensuring codebase quality and consistency.
+
+### 2.1 Atomic Design Adherence
+
+Development must strictly follow the **Atomic Design Methodology**. Before creating a new component, check existing components in this order:
+
+* **Atom:** The smallest reusable UI elements (e.g., `Button`, `Label`).
+* **Molecule:** Groups of Atoms functioning together (e.g., `SearchForm`, `PowerMetric`).
+* **Organism:** Distinct sections of the interface (e.g., `Header`, `AGGDiagnosticsPanel`).
+* **Template:** Layout wireframes using Organisms.
+* **Page:** Instances of Templates populated with real data.
+
+### 2.2 Quality Assurance and Best Practices
+
+* **Unit Testing:** **Always create simple unit tests** when a new Atom, Molecule, Organism, Template, or Page is created.
+* **Code Abstraction:** **Always check for and abstract away duplicate code** to ensure a DRY (Don't Repeat Yourself) codebase.
+* **React Principles:** **Always use React best practices** (e.g., efficient state management, appropriate use of hooks, functional components).
