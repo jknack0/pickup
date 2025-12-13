@@ -43,6 +43,9 @@
       "@api/*": [
         "src/api/*"
       ],
+      "@assets/*": [
+        "src/assets/*"
+      ],
       "@/*": [
         "src/*"
       ]
