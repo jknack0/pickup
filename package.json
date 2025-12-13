@@ -1,14 +1,27 @@
 {
-    "name": "pickup-root",
-    "version": "1.0.0",
-    "private": true,
-    "scripts": {
-        "dev": "concurrently -n \"SERVER,CLIENT\" -c \"blue,magenta\" \"nodemon --watch server --exec ts-node --project server/tsconfig.json server/src/index.ts\" \"npm run dev --prefix client\"",
-        "install:all": "npm install && npm install --prefix server && npm install --prefix client"
-    },
-    "devDependencies": {
-        "concurrently": "^9.1.0",
-        "nodemon": "^3.1.7",
-        "ts-node": "^10.9.2"
-    }
+  "name": "pickup-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n \"SERVER,CLIENT\" -c \"blue,magenta\" \"nodemon --watch server --exec ts-node --project server/tsconfig.json server/src/index.ts\" \"npm run dev --prefix client\"",
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "nodemon": "^3.1.7",
+    "ts-node": "^10.9.2"
+  },
+  "lint-staged": {
+    "client/**/*.{ts,tsx}": [
+      "npm run lint:staged --prefix client",
+      "npm run test:staged --prefix client"
+    ],
+    "server/**/*.ts": [
+      "npm run lint:staged --prefix server",
+      "npm run test:staged --prefix server"
+    ]
+  }
 }
