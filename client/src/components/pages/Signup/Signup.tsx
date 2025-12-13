@@ -1,13 +1,22 @@
-import { Container } from '../../atoms/Container';
+import { Box } from '../../atoms/Box';
 import { MainLayout } from '../../templates/MainLayout/MainLayout';
 import { SignupForm } from '../../organisms/SignupForm';
 
 export const Signup = () => {
   return (
     <MainLayout>
-      <Container maxWidth="sm">
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flex: 1,
+          width: '100%',
+        }}
+      >
         <SignupForm />
-      </Container>
+      </Box>
     </MainLayout>
   );
 };

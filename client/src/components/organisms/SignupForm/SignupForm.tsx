@@ -5,7 +5,7 @@ import { SignupFields } from '../../molecules/SignupFields';
 
 export const SignupForm = () => {
   return (
-    <Box sx={{ mt: 8, mb: 4 }}>
+    <Box sx={{ mb: 4, width: '100%', maxWidth: '800px' }}>
       <AuthHeader title="Sign Up" />
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <SignupFields />
