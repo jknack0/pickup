@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { BottomNavigation } from './BottomNavigation';
-import { BottomNavigationAction } from '../BottomNavigationAction';
-import { Icon } from '../Icon';
+import { BottomNavigationAction } from '@atoms/BottomNavigationAction';
+import { Icon } from '@atoms/Icon';
 
 describe('BottomNavigation', () => {
   it('renders correctly', () => {

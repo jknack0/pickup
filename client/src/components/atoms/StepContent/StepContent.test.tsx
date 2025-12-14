@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { StepContent } from './StepContent';
-import { Stepper } from '../Stepper';
-import { Step } from '../Step';
-import { StepLabel } from '../StepLabel';
+import { Stepper } from '@atoms/Stepper';
+import { Step } from '@atoms/Step';
+import { StepLabel } from '@atoms/StepLabel';
 
 describe('StepContent', () => {
   it('renders correctly', () => {

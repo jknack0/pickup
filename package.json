@@ -8,7 +8,7 @@
     "server"
   ],
   "scripts": {
-    "dev": "concurrently -n \"SHARED,SERVER,CLIENT\" -c \"yellow,blue,magenta\" \"npm run dev --workspace=@pickup/shared\" \"kill-port 3000 && nodemon --watch server --watch packages/shared/dist --exec ts-node --project server/tsconfig.json server/src/index.ts\" \"npm run dev --prefix client\"",
+    "dev": "concurrently -n \"SHARED,SERVER,CLIENT\" -c \"yellow,blue,magenta\" \"npm run dev --workspace=@pickup/shared\" \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "install:all": "npm install && npm install --prefix server && npm install --prefix client",
     "prepare": "husky"
   },

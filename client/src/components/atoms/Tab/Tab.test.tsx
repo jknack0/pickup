@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { Tab } from './Tab';
-import { Tabs } from '../Tabs';
+import { Tabs } from '@atoms/Tabs';
 
 describe('Tab', () => {
   it('renders correctly', () => {

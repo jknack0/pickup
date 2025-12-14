@@ -1,9 +1,9 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { SpeedDialAction } from './SpeedDialAction';
-import { SpeedDial } from '../SpeedDial';
-import { SpeedDialIcon } from '../SpeedDialIcon';
-import { Icon } from '../Icon';
+import { SpeedDial } from '@atoms/SpeedDial';
+import { SpeedDialIcon } from '@atoms/SpeedDialIcon';
+import { Icon } from '@atoms/Icon';
 
 describe('SpeedDialAction', () => {
   it('renders correctly', () => {

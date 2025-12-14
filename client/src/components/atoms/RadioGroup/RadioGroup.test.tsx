@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { RadioGroup } from './RadioGroup';
-import { FormControl } from '../FormControl';
+import { FormControl } from '@atoms/FormControl';
 
 describe('RadioGroup', () => {
   it('renders correctly', () => {

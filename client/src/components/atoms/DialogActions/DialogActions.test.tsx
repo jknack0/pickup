@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { DialogActions } from './DialogActions';
-import { Button } from '../Button';
+import { Button } from '@atoms/Button';
 
 describe('DialogActions', () => {
   it('renders correctly', () => {

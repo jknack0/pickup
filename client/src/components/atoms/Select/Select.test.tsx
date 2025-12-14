@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { Select } from './Select';
-import { MenuItem } from '../MenuItem';
-import { FormControl } from '../FormControl';
-import { InputLabel } from '../InputLabel';
+import { MenuItem } from '@atoms/MenuItem';
+import { FormControl } from '@atoms/FormControl';
+import { InputLabel } from '@atoms/InputLabel';
 
 describe('Select', () => {
   it('renders correctly', () => {

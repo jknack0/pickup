@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { TableRow } from './TableRow';
-import { Table } from '../Table';
-import { TableBody } from '../TableBody';
+import { Table } from '@atoms/Table';
+import { TableBody } from '@atoms/TableBody';
 
 describe('TableRow', () => {
   it('renders correctly', () => {

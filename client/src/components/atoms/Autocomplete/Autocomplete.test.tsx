@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { Autocomplete } from './Autocomplete';
-import { TextField } from '../TextField';
+import { TextField } from '@atoms/TextField';
 
 describe('Autocomplete', () => {
   it('renders correctly', () => {

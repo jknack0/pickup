@@ -12,8 +12,8 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
-import logger from './utils/logger.js';
-import authRoutes from './routes/auth.routes.js';
+import logger from '@/utils/logger.js';
+import authRoutes from '@/routes/auth.routes.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -44,6 +44,17 @@ mongoose
   .then(() => logger.info('Connected to MongoDB'))
   .catch((err) => logger.error('Failed to connect to MongoDB', err));
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   logger.info(`[server]: Server is running at http://localhost:${port}`);
 });
+
+const gracefulShutdown = () => {
+  logger.info('Received shutdown signal. Closing server...');
+  server.close(() => {
+    logger.info('Server closed');
+    process.exit(0);
+  });
+};
+
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);

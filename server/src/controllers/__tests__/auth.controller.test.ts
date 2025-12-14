@@ -1,13 +1,13 @@
 import { Request, Response } from 'express';
-import { register, login } from '../auth.controller.js';
-import User from '../../models/User.js';
+import { register, login } from '@/controllers/auth.controller.js';
+import User from '@/models/User.js';
 import jwt from 'jsonwebtoken';
 
 // Mock dependencies
-jest.mock('../../models/User');
+jest.mock('@/models/User');
 jest.mock('bcrypt');
 jest.mock('jsonwebtoken');
-jest.mock('../../utils/logger'); // Mock logger to suppress logs during tests
+jest.mock('@/utils/logger'); // Mock logger to suppress logs during tests
 
 describe('Auth Controller', () => {
   let req: Partial<Request>;

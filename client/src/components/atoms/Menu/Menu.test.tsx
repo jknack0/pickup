@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { Menu } from './Menu';
-import { MenuItem } from '../MenuItem';
+import { MenuItem } from '@atoms/MenuItem';
 
 describe('Menu', () => {
   it('renders correctly', () => {

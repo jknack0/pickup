@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { register, login, logout, getMe } from '../controllers/auth.controller.js';
-import { authenticate } from '../middleware/auth.js';
-import { validate } from '../middleware/validation.js';
+import { register, login, logout, getMe } from '@/controllers/auth.controller.js';
+import { authenticate } from '@/middleware/auth.js';
+import { validate } from '@/middleware/validation.js';
 import { registerSchema, loginSchema } from '@pickup/shared';
 
 // Force schema refresh

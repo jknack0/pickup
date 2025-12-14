@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-import logger from '../utils/logger.js';
+import logger from '@/utils/logger.js';
 
 interface AnyZodSchema {
   parse(data: unknown): unknown;
