@@ -4,7 +4,7 @@ import { Typography } from '@atoms/Typography';
 import { Button } from '@atoms/Button';
 import { Box } from '@atoms/Box';
 import { Container } from '@atoms/Container';
-import { Avatar } from '@mui/material';
+
 import { useUser } from '@hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,9 +15,8 @@ export const HomeHeader = () => {
   return (
     <AppBar
       position="static"
-      color="transparent"
       elevation={0}
-      sx={{ borderBottom: '1px solid', borderColor: 'divider' }}
+      sx={{ borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'primary.main' }}
     >
       <Container maxWidth="lg">
         <Toolbar disableGutters>
@@ -25,7 +24,7 @@ export const HomeHeader = () => {
             variant="h6"
             noWrap
             component="div"
-            sx={{ flexGrow: 1, fontWeight: 700, cursor: 'pointer' }}
+            sx={{ flexGrow: 1, fontWeight: 700, cursor: 'pointer', color: 'background.default' }}
             onClick={() => navigate('/')}
           >
             Pickup
@@ -33,25 +32,25 @@ export const HomeHeader = () => {
 
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             {user ? (
-              <Box
+              <Button
                 onClick={() => navigate('/dashboard')}
-                sx={{ cursor: 'pointer', '&:hover': { opacity: 0.8 } }}
-                title="Go to Dashboard"
+                sx={{ textTransform: 'none', color: 'background.default' }}
               >
-                <Avatar sx={{ bgcolor: 'secondary.main' }}>
-                  {user.name.charAt(0).toUpperCase()}
-                </Avatar>
-              </Box>
+                Dashboard
+              </Button>
             ) : (
               <>
-                <Button color="inherit" onClick={() => navigate('/login')}>
+                <Button sx={{ color: 'background.default' }} onClick={() => navigate('/login')}>
                   Log In
                 </Button>
                 <Button
                   variant="contained"
-                  color="primary"
                   onClick={() => navigate('/signup')}
-                  sx={{ color: 'primary.contrastText' }}
+                  sx={{
+                    bgcolor: 'background.default',
+                    color: 'primary.main',
+                    '&:hover': { bgcolor: 'background.paper' },
+                  }}
                 >
                   Sign Up
                 </Button>

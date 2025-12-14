@@ -23,7 +23,7 @@ describe('HomeHeader', () => {
     render(<HomeHeader />);
 
     expect(screen.getByText(/pickup/i)).toBeInTheDocument();
-    expect(screen.getByText('J')).toBeInTheDocument(); // Avatar initial
+    expect(screen.getByRole('button', { name: /dashboard/i })).toBeInTheDocument();
     expect(screen.queryByText(/log in/i)).not.toBeInTheDocument();
   });
 
@@ -37,7 +37,7 @@ describe('HomeHeader', () => {
   });
 
   it('navigates to login on click', async () => {
-    mockUseUser.mockReturnValue({ data: null });
+    mockUseUser.mockReturnValue({ data: null }); // Ensure unauthenticated
     const user = userEvent.setup();
     render(<HomeHeader />);
 
@@ -45,13 +45,12 @@ describe('HomeHeader', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/login');
   });
 
-  it('navigates to dashboard on avatar click', async () => {
-    mockUseUser.mockReturnValue({ data: { name: 'John Doe' } });
+  it('navigates to dashboard on click', async () => {
+    mockUseUser.mockReturnValue({ data: { firstName: 'John' } });
     const user = userEvent.setup();
     render(<HomeHeader />);
 
-    // Click the avatar container (Box with title)
-    await user.click(screen.getByTitle(/go to dashboard/i));
+    await user.click(screen.getByRole('button', { name: /dashboard/i }));
     expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
   });
 });

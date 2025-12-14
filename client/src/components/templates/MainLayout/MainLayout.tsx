@@ -9,6 +9,7 @@ import { ListItem } from '@atoms/ListItem';
 import { ListItemButton } from '@atoms/ListItemButton';
 import { ListItemText } from '@atoms/ListItemText';
 
+import { useNavigate } from 'react-router-dom';
 import { useLogout } from '@hooks/useAuth';
 
 const drawerWidth = 240;
@@ -19,6 +20,7 @@ export interface MainLayoutProps {
 
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const { mutate: logout } = useLogout();
+  const navigate = useNavigate();
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
@@ -53,7 +55,10 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           <Box sx={{ borderTop: 1, borderColor: 'divider' }}>
             <List>
               <ListItem disablePadding>
-                <ListItemButton onClick={() => logout()} sx={{ justifyContent: 'center' }}>
+                <ListItemButton
+                  onClick={() => logout(undefined, { onSuccess: () => navigate('/') })}
+                  sx={{ justifyContent: 'center' }}
+                >
                   <ListItemText primary="Sign Out" primaryTypographyProps={{ align: 'center' }} />
                 </ListItemButton>
               </ListItem>
