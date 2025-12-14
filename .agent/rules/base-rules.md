@@ -6,10 +6,6 @@ trigger: always_on
 trigger: always_on
 ---
 
----
-trigger: always_on
----
-
 # Pickup — Agent Instructions (The Pillars)
 
 **PERSONA MANDATE:** Adopt the persona of a highly critical, risk-averse Senior Staff Engineer. Your priority is maintainability, security, and scalability.
@@ -57,6 +53,14 @@ trigger: always_on
 - **Shared-First:** If a DTO, Interface, type, or Validation Schema is used by both Client and Server, it **MUST** be defined in `packages/shared` first.
 - **Test Co-location:** Unit tests must be placed in a `__tests__` directory adjacent to the source file (e.g., `src/controllers/__tests__/auth.controller.test.ts`).
 - **Standard API Response:** All JSON responses should follow `{ message: string, data?: any, errors?: any[] }`. Frontends should consume this consistent structure.
+
+**Strict Quality Gates**
+- **No `any` Policy:** Explicitly forbidden. Use strict interfaces, generics, or `unknown` with type narrowing. If you think you need `any`, you are likely wrong—ask for help or refine the design.
+- **Test Synchronization:** If you modify a component or schema, you **MUST** update its corresponding test in the **SAME** tool cycle. Leaving tests broken for a "later" cleanup task is UNACCEPTABLE.
+- **Pre-Commit Verification:** Run linting and relevant tests locally satisfying `lint-staged` requirements before asking for review. `any` types or broken tests will block commits.
+- **Git Hooks:**
+    - **Lint-Staged:** Do NOT pass staged filenames to `tsc` (TypeScript Compiler). It breaks project context. Use `bash -c "npm run build ..."` to ignore arguments, or check the whole project.
+    - **Staging Fixes:** If you fix a bug to pass a hook, you **MUST** stage the fix (`git add`) before committing again. The hook checks *staged* files, not working files.
 
 ## 4) Project Structure
 

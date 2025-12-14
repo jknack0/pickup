@@ -58,7 +58,15 @@ Development must strictly follow the **Atomic Design Methodology**. Before creat
 
 * **Unit Testing:** **MANDATORY:** You **MUST** create a corresponding [.test.tsx](cci:7://file:///c:/Dev/pickup/client/src/App.test.tsx:0:0-0:0) file **IMMEDIATELY** whenever you create a new Atom, Molecule, Organism, Template, or Page.
     * **NO EXCUSES:** Do not wait for a separate task. Do not ask for permission. If you create `Foo.tsx`, you MUST create `Foo.test.tsx` in the same tool execution cycle.
+    * **Sync on Edit:** If you edit `Foo.tsx`, you **MUST** run `Foo.test.tsx` to verify regression.
     * **Simplicity:** Tests can be simple "renders without crashing" or "checks for text" tests initially, but they MUST exist to prevent regression.
+* **Type Safety:**
+    * **No `any`:** `any` is strictly prohibited in React components and hooks. Use fully typed interfaces.
+    * **Prop interfaces:** Every component must have a clearly defined `Props` interface.
 * **State Management:** **Use React Query** for all server state (User, Data). Avoid global Context for data fetching.
 * **Code Abstraction:** **Always check for and abstract away duplicate code** to ensure a DRY (Don't Repeat Yourself) codebase.
-* **React Principles:** **Always use React best practices** (e.g., efficient state management, appropriate use of hooks, functional components).
+*   **React Principles:** **Always use React best practices** (e.g., efficient state management, appropriate use of hooks, functional components).
+*   **Forms:** Use **React Hook Form** + **Zod** (`@hookform/resolvers/zod`) for all form state and validation.
+    *   **Validation:** Use `mode: 'onBlur'` for field-level feedback.
+    *   **Server Errors:** Bind server-side field errors to the form using `setError` via a standard error handler.
+*   **Notifications:** Use `notistack` (`enqueueSnackbar`) for global feedback (success/error toasts). Do not use inline alerts for transient states.
