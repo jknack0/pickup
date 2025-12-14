@@ -6,6 +6,9 @@ import logger from '../utils/logger';
 // issue when importing Zod schemas from a shared package with its own node_modules
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const validate = (schema: any) => (req: Request, res: Response, next: NextFunction) => {
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
   try {
     schema.parse(req.body);
     next();

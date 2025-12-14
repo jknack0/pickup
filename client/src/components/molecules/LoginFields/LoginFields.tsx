@@ -5,6 +5,7 @@ export const LoginFields = () => {
   return (
     <Stack spacing={2.5}>
       <TextField
+        name="email"
         label="Email Address"
         fullWidth
         variant="outlined"
@@ -20,6 +21,7 @@ export const LoginFields = () => {
         }}
       />
       <TextField
+        name="password"
         label="Password"
         fullWidth
         variant="outlined"

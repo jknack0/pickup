@@ -3,19 +3,17 @@ import path from 'path';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+dotenv.config();
 import mongoose from 'mongoose';
 import logger from './utils/logger';
 import authRoutes from './routes/auth.routes';
-
-const envPath = path.resolve(__dirname, '../../.env');
-dotenv.config({ path: envPath });
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(
   cors({
-    origin: 'http://localhost:5173', // Frontend URL
+    origin: true, // Automatically reflect the request origin
     credentials: true, // Allow cookies
   }),
 );

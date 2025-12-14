@@ -7,23 +7,56 @@ import { useRegister } from '@hooks/useAuth';
 import type { RegisterInput } from '@pickup/shared';
 
 export const SignupForm = () => {
-  const { mutate: register, isPending, error } = useRegister();
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { mutate: register, isPending } = useRegister();
+  const [globalError, setGlobalError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setErrorMessage(null);
+    setGlobalError(null);
+    setFieldErrors({});
+
     const formData = new FormData(event.currentTarget);
-    const name = formData.get('fullName') as string;
+    const firstName = formData.get('firstName') as string;
+    const lastName = formData.get('lastName') as string;
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
+    const confirmPassword = formData.get('confirmPassword') as string;
+    const dateOfBirth = formData.get('dateOfBirth') as string;
 
-    const credentials: RegisterInput = { name, email, password };
+    const credentials: RegisterInput = {
+      firstName,
+      lastName,
+      email,
+      password,
+      confirmPassword,
+      dateOfBirth,
+    };
 
     register(credentials, {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       onError: (err: any) => {
-        setErrorMessage(err.response?.data?.message || 'Registration failed');
+        const responseData = err.response?.data;
+
+        // Handle Zod array errors
+        if (responseData?.errors && Array.isArray(responseData.errors)) {
+          const newFieldErrors: Record<string, string> = {};
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          responseData.errors.forEach((issue: any) => {
+            const path = issue.path[0];
+            if (path) {
+              newFieldErrors[path] = issue.message;
+            }
+          });
+          setFieldErrors(newFieldErrors);
+        }
+
+        // Handle generic message if no field errors or as fallback
+        if (responseData?.message) {
+          setGlobalError(responseData.message);
+        } else if (!responseData?.errors) {
+          setGlobalError('Registration failed');
+        }
       },
     });
   };
@@ -40,23 +73,17 @@ export const SignupForm = () => {
       }}
     >
       <AuthHeader title="Sign Up" />
-      {errorMessage && (
+      {globalError && (
         <Alert severity="error" sx={{ mt: 2 }}>
-          {errorMessage}
-        </Alert>
-      )}
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      {(error as any)?.response?.data?.errors && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {JSON.stringify((error as any).response.data.errors)}
+          {globalError}
         </Alert>
       )}
       <form
         onSubmit={handleSubmit}
+        autoComplete="off"
         style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '24px' }}
       >
-        <SignupFields />
+        <SignupFields errors={fieldErrors} />
         <Button
           type="submit"
           variant="contained"

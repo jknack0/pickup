@@ -11,23 +11,19 @@ const generateToken = (userId: string) => {
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { name, email, password } = req.body;
+    const { firstName, lastName, email, password, dateOfBirth } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Hash is handled by pre-save hook, we map password -> passwordHash
-    // Actually, passing 'password' to 'passwordHash' field directly triggers the hook if we set it
-    // But the schema expects 'passwordHash', let's fix the model usage.
-    // Ideally we pass 'passwordHash' as the raw password, and the hook hashes it.
-    // Or better, we manually hash here? No, let's use the hook.
-    // The hook checks 'isModified("passwordHash")'.
-
+    // Hash is handled by pre-save hook
     const user = new User({
-      name,
+      firstName,
+      lastName,
       email,
+      dateOfBirth,
       passwordHash: password,
     });
 
@@ -42,7 +38,14 @@ export const register = async (req: Request, res: Response) => {
       sameSite: 'strict',
     });
 
-    res.status(201).json({ user: { id: user._id, name: user.name, email: user.email } });
+    res.status(201).json({
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+      },
+    });
   } catch (error) {
     logger.error('Registration error', error);
     res.status(500).json({ message: 'Server error' });
@@ -72,7 +75,14 @@ export const login = async (req: Request, res: Response) => {
       sameSite: 'strict',
     });
 
-    res.json({ user: { id: user._id, name: user.name, email: user.email } });
+    res.json({
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+      },
+    });
   } catch (error) {
     logger.error('Login error', error);
     res.status(500).json({ message: 'Server error' });

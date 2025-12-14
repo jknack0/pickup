@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validation';
 import { registerSchema, loginSchema } from '@pickup/shared';
 
+// Force schema refresh
 const router = Router();
 
 router.post('/register', validate(registerSchema), register);

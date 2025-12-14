@@ -26,18 +26,29 @@ describe('Auth Controller', () => {
 
   describe('register', () => {
     it('should create a new user and return user data + token', async () => {
-      req.body = { name: 'Test', email: 'test@test.com', password: 'password123' };
+      req.body = {
+        firstName: 'Test',
+        lastName: 'User',
+        email: 'test@test.com',
+        password: 'password123',
+        confirmPassword: 'password123',
+        dateOfBirth: '1990-01-01',
+      };
 
       (User.findOne as jest.Mock).mockResolvedValue(null);
       (jwt.sign as jest.Mock).mockReturnValue('mocktoken');
 
       // Mock the User constructor to return an object with save
-      const mockSave = jest
-        .fn()
-        .mockResolvedValue({ _id: 'userid', name: 'Test', email: 'test@test.com' });
+      const mockSave = jest.fn().mockResolvedValue({
+        _id: 'userid',
+        firstName: 'Test',
+        lastName: 'User',
+        email: 'test@test.com',
+      });
       const mockUserInstance = {
         _id: 'userid',
-        name: 'Test',
+        firstName: 'Test',
+        lastName: 'User',
         email: 'test@test.com',
         save: mockSave,
       };
@@ -50,7 +61,7 @@ describe('Auth Controller', () => {
       expect(res.cookie).toHaveBeenCalledWith('token', 'mocktoken', expect.any(Object));
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
-        user: { id: 'userid', name: 'Test', email: 'test@test.com' },
+        user: { id: 'userid', firstName: 'Test', lastName: 'User', email: 'test@test.com' },
       });
     });
 
@@ -70,7 +81,8 @@ describe('Auth Controller', () => {
       req.body = { email: 'test@test.com', password: 'password' };
       const mockUser = {
         _id: 'userid',
-        name: 'Test',
+        firstName: 'Test',
+        lastName: 'User',
         email: 'test@test.com',
         comparePassword: jest.fn().mockResolvedValue(true),
       };
@@ -82,7 +94,7 @@ describe('Auth Controller', () => {
       expect(mockUser.comparePassword).toHaveBeenCalledWith('password');
       expect(res.cookie).toHaveBeenCalledWith('token', 'mocktoken', expect.any(Object));
       expect(res.json).toHaveBeenCalledWith({
-        user: { id: 'userid', name: 'Test', email: 'test@test.com' },
+        user: { id: 'userid', firstName: 'Test', lastName: 'User', email: 'test@test.com' },
       });
     });
 

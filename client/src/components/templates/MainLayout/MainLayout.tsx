@@ -9,6 +9,8 @@ import { ListItem } from '@atoms/ListItem';
 import { ListItemButton } from '@atoms/ListItemButton';
 import { ListItemText } from '@atoms/ListItemText';
 
+import { useLogout } from '@hooks/useAuth';
+
 const drawerWidth = 240;
 
 export interface MainLayoutProps {
@@ -16,6 +18,8 @@ export interface MainLayoutProps {
 }
 
 export const MainLayout = ({ children }: MainLayoutProps) => {
+  const { mutate: logout } = useLogout();
+
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
       <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
@@ -34,16 +38,27 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         }}
       >
         <Toolbar />
-        <Box sx={{ overflow: 'auto' }}>
-          <List>
-            {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text) => (
-              <ListItem key={text} disablePadding>
-                <ListItemButton>
-                  <ListItemText primary={text} />
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <Box sx={{ overflow: 'auto', flexGrow: 1 }}>
+            <List>
+              {['Dashboard', 'My Games', 'Profile', 'Settings'].map((text) => (
+                <ListItem key={text} disablePadding>
+                  <ListItemButton>
+                    <ListItemText primary={text} />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+          <Box sx={{ borderTop: 1, borderColor: 'divider' }}>
+            <List>
+              <ListItem disablePadding>
+                <ListItemButton onClick={() => logout()} sx={{ justifyContent: 'center' }}>
+                  <ListItemText primary="Sign Out" primaryTypographyProps={{ align: 'center' }} />
                 </ListItemButton>
               </ListItem>
-            ))}
-          </List>
+            </List>
+          </Box>
         </Box>
       </Drawer>
       <Box
