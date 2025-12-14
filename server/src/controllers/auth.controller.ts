@@ -94,10 +94,15 @@ export const logout = (req: Request, res: Response) => {
   res.json({ message: 'Logged out successfully' });
 };
 
+interface AuthRequest extends Request {
+  user?: {
+    id: string;
+  };
+}
+
 export const getMe = async (req: Request, res: Response) => {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const userId = (req as any).user?.id; // Temporary casting until we extend Express Request
+    const userId = (req as AuthRequest).user?.id;
     const user = await User.findById(userId).select('-passwordHash');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });

@@ -8,6 +8,18 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSnackbar } from 'notistack';
 
+interface ApiErrorResponse {
+  message?: string;
+  errors?: { path: (string | number)[]; message: string }[];
+}
+
+interface ApiError {
+  response?: {
+    data?: ApiErrorResponse;
+  };
+  message?: string;
+}
+
 export const LoginForm = () => {
   const { mutate: login, isPending } = useLogin();
   const { enqueueSnackbar } = useSnackbar();
@@ -24,14 +36,12 @@ export const LoginForm = () => {
 
   const onSubmit = (data: LoginInput) => {
     login(data, {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      onError: (err: any) => {
+      onError: (err: ApiError) => {
         const responseData = err.response?.data;
 
         // Handle Zod array errors from server
         if (responseData?.errors && Array.isArray(responseData.errors)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          responseData.errors.forEach((issue: any) => {
+          responseData.errors.forEach((issue) => {
             const path = issue.path[0];
             if (path) {
               setError(path as keyof LoginInput, { message: issue.message });
