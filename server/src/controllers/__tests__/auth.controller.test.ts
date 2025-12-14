@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { register, login } from '../auth.controller';
-import User from '../../models/User';
+import { register, login } from '../auth.controller.js';
+import User from '../../models/User.js';
 import jwt from 'jsonwebtoken';
 
 // Mock dependencies

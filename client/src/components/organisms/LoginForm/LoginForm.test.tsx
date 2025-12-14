@@ -1,4 +1,6 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { SnackbarProvider } from 'notistack';
 import { describe, it, expect } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { LoginForm } from './LoginForm';
@@ -12,7 +14,11 @@ const createTestQueryClient = () =>
 
 const renderWithClient = (ui: React.ReactNode) => {
   const testClient = createTestQueryClient();
-  return render(<QueryClientProvider client={testClient}>{ui}</QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={testClient}>
+      <SnackbarProvider>{ui}</SnackbarProvider>
+    </QueryClientProvider>,
+  );
 };
 
 describe('LoginForm', () => {
@@ -34,5 +40,20 @@ describe('LoginForm', () => {
 
     expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+  });
+
+  it('shows validation error on blur', async () => {
+    const user = userEvent.setup();
+    renderWithClient(<LoginForm />);
+
+    const emailInput = screen.getByLabelText(/email address/i);
+    const passwordInput = screen.getByLabelText(/password/i);
+
+    // Focus and blur email
+    await user.click(emailInput);
+    await user.click(passwordInput); // Blur email by clicking password
+
+    // Check email error
+    expect(await screen.findByText(/invalid email address/i)).toBeInTheDocument();
   });
 });

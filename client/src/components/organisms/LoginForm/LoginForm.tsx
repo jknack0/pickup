@@ -1,28 +1,52 @@
-import { useState } from 'react';
-import { Paper, Alert } from '@mui/material';
+import { Paper } from '@mui/material';
 import { Button } from '@atoms/Button';
 import { AuthHeader } from '@molecules/AuthHeader';
 import { LoginFields } from '@molecules/LoginFields';
 import { useLogin } from '@hooks/useAuth';
-import type { LoginInput } from '@pickup/shared';
+import { type LoginInput, loginSchema } from '@pickup/shared';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useSnackbar } from 'notistack';
 
 export const LoginForm = () => {
-  const { mutate: login, isPending, error } = useLogin();
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { mutate: login, isPending } = useLogin();
+  const { enqueueSnackbar } = useSnackbar();
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setErrorMessage(null);
-    const formData = new FormData(event.currentTarget);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    mode: 'onBlur',
+  });
 
-    const credentials: LoginInput = { email, password };
-
-    login(credentials, {
+  const onSubmit = (data: LoginInput) => {
+    login(data, {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       onError: (err: any) => {
-        setErrorMessage(err.response?.data?.message || 'Login failed');
+        const responseData = err.response?.data;
+
+        // Handle Zod array errors from server
+        if (responseData?.errors && Array.isArray(responseData.errors)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          responseData.errors.forEach((issue: any) => {
+            const path = issue.path[0];
+            if (path) {
+              setError(path as keyof LoginInput, { message: issue.message });
+            }
+          });
+          // Also show a generic toast if validation failed
+          enqueueSnackbar('Please check the fields for errors.', { variant: 'warning' });
+          return;
+        }
+
+        const message = responseData?.message || err.message || 'Login failed';
+        enqueueSnackbar(message, { variant: 'error' });
+      },
+      onSuccess: () => {
+        enqueueSnackbar('Logged in successfully!', { variant: 'success' });
       },
     });
   };
@@ -39,23 +63,12 @@ export const LoginForm = () => {
       }}
     >
       <AuthHeader title="Log In" subtitle="Welcome back! Please enter your details." />
-      {errorMessage && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {errorMessage}
-        </Alert>
-      )}
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      {(error as any)?.response?.data?.errors && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {JSON.stringify((error as any).response.data.errors)}
-        </Alert>
-      )}
+
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit(onSubmit)}
         style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '24px' }}
       >
-        <LoginFields />
+        <LoginFields register={register} errors={errors} />
         <Button
           type="submit"
           variant="contained"

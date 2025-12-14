@@ -1,23 +1,26 @@
 import { TextField } from '@atoms/TextField';
 import { Stack } from '@atoms/Stack';
+import { type UseFormRegister, type FieldErrors } from 'react-hook-form';
+import type { RegisterInput } from '@pickup/shared';
 
 interface SignupFieldsProps {
-  errors?: Record<string, string>;
+  register: UseFormRegister<RegisterInput>;
+  errors: FieldErrors<RegisterInput>;
 }
 
-export const SignupFields = ({ errors = {} }: SignupFieldsProps) => {
+export const SignupFields = ({ register, errors }: SignupFieldsProps) => {
   return (
     <Stack spacing={2.5}>
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
         <TextField
-          name="firstName"
           label="First Name"
           fullWidth
           variant="outlined"
           autoComplete="given-name"
           required
           error={!!errors.firstName}
-          helperText={errors.firstName}
+          helperText={errors.firstName?.message}
+          {...register('firstName')}
           sx={{
             '& .MuiOutlinedInput-root': {
               bgcolor: 'background.paper',
@@ -26,14 +29,14 @@ export const SignupFields = ({ errors = {} }: SignupFieldsProps) => {
           }}
         />
         <TextField
-          name="lastName"
           label="Last Name"
           fullWidth
           variant="outlined"
           autoComplete="family-name"
           required
           error={!!errors.lastName}
-          helperText={errors.lastName}
+          helperText={errors.lastName?.message}
+          {...register('lastName')}
           sx={{
             '& .MuiOutlinedInput-root': {
               bgcolor: 'background.paper',
@@ -44,15 +47,15 @@ export const SignupFields = ({ errors = {} }: SignupFieldsProps) => {
       </Stack>
 
       <TextField
-        name="dateOfBirth"
         label="Date of Birth"
         type="date"
         fullWidth
         variant="outlined"
         required
         error={!!errors.dateOfBirth}
-        helperText={errors.dateOfBirth}
+        helperText={errors.dateOfBirth?.message}
         InputLabelProps={{ shrink: true }}
+        {...register('dateOfBirth')}
         sx={{
           '& .MuiOutlinedInput-root': {
             bgcolor: 'background.paper',
@@ -61,15 +64,15 @@ export const SignupFields = ({ errors = {} }: SignupFieldsProps) => {
         }}
       />
       <TextField
-        name="email"
         label="Email Address"
         fullWidth
         variant="outlined"
         type="email"
-        autoComplete="off"
+        autoComplete="email"
         required
         error={!!errors.email}
-        helperText={errors.email}
+        helperText={errors.email?.message}
+        {...register('email')}
         sx={{
           '& .MuiOutlinedInput-root': {
             bgcolor: 'background.paper',
@@ -80,7 +83,6 @@ export const SignupFields = ({ errors = {} }: SignupFieldsProps) => {
         }}
       />
       <TextField
-        name="password"
         label="Password"
         fullWidth
         variant="outlined"
@@ -88,7 +90,8 @@ export const SignupFields = ({ errors = {} }: SignupFieldsProps) => {
         autoComplete="new-password"
         required
         error={!!errors.password}
-        helperText={errors.password}
+        helperText={errors.password?.message}
+        {...register('password')}
         sx={{
           '& .MuiOutlinedInput-root': {
             bgcolor: 'background.paper',
@@ -99,7 +102,6 @@ export const SignupFields = ({ errors = {} }: SignupFieldsProps) => {
         }}
       />
       <TextField
-        name="confirmPassword"
         label="Confirm Password"
         fullWidth
         variant="outlined"
@@ -107,7 +109,8 @@ export const SignupFields = ({ errors = {} }: SignupFieldsProps) => {
         autoComplete="new-password"
         required
         error={!!errors.confirmPassword}
-        helperText={errors.confirmPassword}
+        helperText={errors.confirmPassword?.message}
+        {...register('confirmPassword')}
         sx={{
           '& .MuiOutlinedInput-root': {
             bgcolor: 'background.paper',

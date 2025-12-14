@@ -1,12 +1,19 @@
+import { fileURLToPath } from 'url';
+import path, { dirname } from 'path';
+import dotenv from 'dotenv';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load .env from root directory (../../.env relative to src/index.ts)
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
 import express, { Request, Response } from 'express';
-import path from 'path';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import dotenv from 'dotenv';
-dotenv.config();
 import mongoose from 'mongoose';
-import logger from './utils/logger';
-import authRoutes from './routes/auth.routes';
+import logger from './utils/logger.js';
+import authRoutes from './routes/auth.routes.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -22,14 +29,15 @@ app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
 
-// Helper to determine if we are in production or strictly API mode
-// For this setup, we'll assume if built frontend exists, we serve it
-const clientBuildPath = path.resolve(__dirname, '../../client/dist');
-app.use(express.static(clientBuildPath));
+// Serve static files only in production
+if (process.env.NODE_ENV === 'production') {
+  const clientBuildPath = path.resolve(__dirname, '../../client/dist');
+  app.use(express.static(clientBuildPath));
 
-app.get('*', (req: Request, res: Response) => {
-  res.sendFile(path.join(clientBuildPath, 'index.html'));
-});
+  app.get('*', (req: Request, res: Response) => {
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+  });
+}
 
 mongoose
   .connect(process.env.MONGODB_URI as string)

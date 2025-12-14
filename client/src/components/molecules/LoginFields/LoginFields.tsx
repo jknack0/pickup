@@ -1,16 +1,25 @@
 import { TextField } from '@atoms/TextField';
 import { Stack } from '@atoms/Stack';
+import { type UseFormRegister, type FieldErrors } from 'react-hook-form';
+import type { LoginInput } from '@pickup/shared';
 
-export const LoginFields = () => {
+interface LoginFieldsProps {
+  register: UseFormRegister<LoginInput>;
+  errors: FieldErrors<LoginInput>;
+}
+
+export const LoginFields = ({ register, errors }: LoginFieldsProps) => {
   return (
     <Stack spacing={2.5}>
       <TextField
-        name="email"
         label="Email Address"
         fullWidth
         variant="outlined"
         type="email"
         required
+        error={!!errors.email}
+        helperText={errors.email?.message}
+        {...register('email')}
         sx={{
           '& .MuiOutlinedInput-root': {
             bgcolor: 'background.paper',
@@ -21,12 +30,14 @@ export const LoginFields = () => {
         }}
       />
       <TextField
-        name="password"
         label="Password"
         fullWidth
         variant="outlined"
         type="password"
         required
+        error={!!errors.password}
+        helperText={errors.password?.message}
+        {...register('password')}
         sx={{
           '& .MuiOutlinedInput-root': {
             bgcolor: 'background.paper',

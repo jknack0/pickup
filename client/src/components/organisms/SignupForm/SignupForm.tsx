@@ -1,62 +1,56 @@
-import { useState } from 'react';
-import { Paper, Alert } from '@mui/material';
+import { Paper } from '@mui/material';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useSnackbar } from 'notistack';
 import { Button } from '@atoms/Button';
 import { AuthHeader } from '@molecules/AuthHeader';
 import { SignupFields } from '@molecules/SignupFields';
 import { useRegister } from '@hooks/useAuth';
-import type { RegisterInput } from '@pickup/shared';
+import { type RegisterInput, registerSchema } from '@pickup/shared';
 
 export const SignupForm = () => {
-  const { mutate: register, isPending } = useRegister();
-  const [globalError, setGlobalError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const { enqueueSnackbar } = useSnackbar();
+  const { mutate: registerUser, isPending } = useRegister();
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setGlobalError(null);
-    setFieldErrors({});
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<RegisterInput>({
+    resolver: zodResolver(registerSchema),
+    mode: 'onBlur',
+  });
 
-    const formData = new FormData(event.currentTarget);
-    const firstName = formData.get('firstName') as string;
-    const lastName = formData.get('lastName') as string;
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-    const confirmPassword = formData.get('confirmPassword') as string;
-    const dateOfBirth = formData.get('dateOfBirth') as string;
-
-    const credentials: RegisterInput = {
-      firstName,
-      lastName,
-      email,
-      password,
-      confirmPassword,
-      dateOfBirth,
-    };
-
-    register(credentials, {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      onError: (err: any) => {
+  const onSubmit = (data: RegisterInput) => {
+    registerUser(data, {
+      onError: (err: {
+        response?: {
+          data?: { errors?: { path: (string | number)[]; message: string }[]; message?: string };
+        };
+        message?: string;
+      }) => {
         const responseData = err.response?.data;
 
-        // Handle Zod array errors
+        // Handle Zod array errors from server
         if (responseData?.errors && Array.isArray(responseData.errors)) {
-          const newFieldErrors: Record<string, string> = {};
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          responseData.errors.forEach((issue: any) => {
+          responseData.errors.forEach((issue) => {
             const path = issue.path[0];
             if (path) {
-              newFieldErrors[path] = issue.message;
+              setError(path as keyof RegisterInput, { message: issue.message });
             }
           });
-          setFieldErrors(newFieldErrors);
+          // Also show a generic toast if validation failed
+          enqueueSnackbar('Please check the fields for errors.', { variant: 'warning' });
+          return;
         }
 
-        // Handle generic message if no field errors or as fallback
-        if (responseData?.message) {
-          setGlobalError(responseData.message);
-        } else if (!responseData?.errors) {
-          setGlobalError('Registration failed');
-        }
+        // Handle generic message
+        const message = responseData?.message || err.message || 'Registration failed';
+        enqueueSnackbar(message, { variant: 'error' });
+      },
+      onSuccess: () => {
+        enqueueSnackbar('Account created successfully!', { variant: 'success' });
       },
     });
   };
@@ -73,17 +67,13 @@ export const SignupForm = () => {
       }}
     >
       <AuthHeader title="Sign Up" />
-      {globalError && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {globalError}
-        </Alert>
-      )}
+
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit(onSubmit)}
         autoComplete="off"
         style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '24px' }}
       >
-        <SignupFields errors={fieldErrors} />
+        <SignupFields register={register} errors={errors} />
         <Button
           type="submit"
           variant="contained"

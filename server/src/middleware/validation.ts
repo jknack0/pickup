@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-import logger from '../utils/logger';
+import logger from '../utils/logger.js';
 
 // Using any for schema to avoid "Types have separate declarations of a private property"
 // issue when importing Zod schemas from a shared package with its own node_modules

@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import User from '../User';
+import User from '../User.js';
 
 let mongoServer: MongoMemoryServer;
 
@@ -22,7 +22,8 @@ afterEach(async () => {
 describe('User Model', () => {
   it('should hash password on save', async () => {
     const user = new User({
-      name: 'Test User',
+      firstName: 'Test',
+      lastName: 'User',
       email: 'test@example.com',
       passwordHash: 'plainPassword123',
     });
@@ -34,7 +35,8 @@ describe('User Model', () => {
 
   it('should compare password correctly', async () => {
     const user = new User({
-      name: 'Test',
+      firstName: 'Test',
+      lastName: 'User',
       email: 'test@test.com',
       passwordHash: 'secret',
     });

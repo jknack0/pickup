@@ -8,13 +8,14 @@
     "server"
   ],
   "scripts": {
-    "dev": "concurrently -n \"SHARED,SERVER,CLIENT\" -c \"yellow,blue,magenta\" \"npm run dev --workspace=@pickup/shared\" \"nodemon --watch server --watch packages/shared/dist --exec ts-node --project server/tsconfig.json server/src/index.ts\" \"npm run dev --prefix client\"",
+    "dev": "concurrently -n \"SHARED,SERVER,CLIENT\" -c \"yellow,blue,magenta\" \"npm run dev --workspace=@pickup/shared\" \"kill-port 3000 && nodemon --watch server --watch packages/shared/dist --exec ts-node --project server/tsconfig.json server/src/index.ts\" \"npm run dev --prefix client\"",
     "install:all": "npm install && npm install --prefix server && npm install --prefix client",
     "prepare": "husky"
   },
   "devDependencies": {
     "concurrently": "^9.1.0",
     "husky": "^9.1.7",
+    "kill-port": "^2.0.1",
     "lint-staged": "^16.2.7",
     "nodemon": "^3.1.7",
     "ts-node": "^10.9.2"
@@ -29,7 +30,7 @@
       "npm run test:staged --prefix server"
     ],
     "packages/shared/**/*.ts": [
-      "npm run build --workspace=@pickup/shared"
+      "bash -c \"npm run build --workspace=@pickup/shared\""
     ]
   }
 }

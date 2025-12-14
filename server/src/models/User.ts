@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { RegisterInput } from '@pickup/shared';
+import bcrypt from 'bcrypt';
 
 export interface IUser extends RegisterInput, Document {
   passwordHash: string;
@@ -10,15 +11,13 @@ export interface IUser extends RegisterInput, Document {
 
 const UserSchema: Schema = new Schema(
   {
-    name: { type: String, required: true },
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     passwordHash: { type: String, required: true },
   },
   { timestamps: true },
 );
-
-// Hash password before saving
-import bcrypt from 'bcrypt';
 
 UserSchema.pre<IUser>('save', async function () {
   if (!this.isModified('passwordHash')) return;
