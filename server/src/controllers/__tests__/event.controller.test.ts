@@ -2,15 +2,18 @@ import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 import { Request, Response } from 'express';
 import * as eventController from '../event.controller.js';
 import Event from '@/models/Event.js';
+import User from '@/models/User.js';
 
 // Mock dependencies
 jest.mock('@/models/Event.js');
+jest.mock('@/models/User.js');
 jest.mock('@/utils/logger.js');
 jest.mock('@pickup/shared', () => ({
   EventType: { VOLLEYBALL: 'VOLLEYBALL' },
   EventFormat: { OPEN_GYM: 'OPEN_GYM' },
   EventPosition: { SETTER: 'Setter' },
   AttendeeStatus: { YES: 'YES', NO: 'NO', MAYBE: 'MAYBE', WAITLIST: 'WAITLIST' },
+  EventStatus: { ACTIVE: 'ACTIVE', CANCELED: 'CANCELED' },
 }));
 
 describe('Event Controller', () => {
@@ -39,6 +42,7 @@ describe('Event Controller', () => {
         title: 'Volleyball Match',
         date: '2025-01-01',
         location: 'Beach',
+        coordinates: { lat: 10, lng: 20 },
         description: 'Fun game',
       };
 
@@ -150,6 +154,116 @@ describe('Event Controller', () => {
       await eventController.joinEvent(mockRequest as Request, mockResponse as Response);
 
       expect(statusMock).toHaveBeenCalledWith(400);
+    });
+  });
+
+  describe('cancelEvent', () => {
+    it('should update status to CANCELED if user is organizer', async () => {
+      mockRequest.params = { id: 'event123' };
+      const mockEvent = {
+        organizer: 'user123',
+        status: 'ACTIVE',
+        save: jest.fn(),
+        populate: jest.fn(),
+      };
+      (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
+
+      await eventController.cancelEvent(mockRequest as Request, mockResponse as Response);
+
+      expect(mockEvent.status).toBe('CANCELED');
+      expect(mockEvent.save).toHaveBeenCalled();
+      expect(mockEvent.populate).toHaveBeenCalledTimes(2);
+      expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ message: 'Event canceled' }));
+    });
+
+    it('should return 403 if user is not organizer', async () => {
+      mockRequest.params = { id: 'event123' };
+      mockRequest.user = { id: 'otherUser' };
+      const mockEvent = {
+        organizer: 'user123',
+        status: 'ACTIVE',
+      };
+      (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
+
+      await eventController.cancelEvent(mockRequest as Request, mockResponse as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(403);
+    });
+  });
+
+  describe('removeAttendee', () => {
+    it('should remove attendee if user is organizer', async () => {
+      mockRequest.params = { id: 'event123', userId: 'targetUser' };
+      const mockEvent = {
+        organizer: 'user123',
+        attendees: [{ user: 'user123' }, { user: 'targetUser' }],
+        save: jest.fn(),
+        populate: jest.fn(),
+      };
+      (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
+
+      await eventController.removeAttendee(mockRequest as Request, mockResponse as Response);
+
+      expect(mockEvent.attendees).toHaveLength(1);
+      expect(mockEvent.attendees[0].user).toBe('user123'); // Target removed
+      expect(mockEvent.save).toHaveBeenCalled();
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Attendee removed' }),
+      );
+    });
+
+    it('should return 403 if user is not organizer', async () => {
+      mockRequest.params = { id: 'event123', userId: 'targetUser' };
+      mockRequest.user = { id: 'otherUser' };
+      const mockEvent = {
+        organizer: 'user123',
+        attendees: [],
+      };
+      (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
+
+      await eventController.removeAttendee(mockRequest as Request, mockResponse as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(403);
+    });
+  });
+
+  describe('addAttendee', () => {
+    it('should add attendee by email if user is organizer', async () => {
+      mockRequest.params = { id: 'event123' };
+      mockRequest.body = { email: 'new@example.com' };
+
+      const mockEvent = {
+        organizer: 'user123',
+        attendees: [] as { user: unknown }[], // Explicit cast to allow pushing
+        save: jest.fn(),
+        populate: jest.fn(),
+      };
+      const mockUserToAdd = { _id: 'newUser456', id: 'newUser456' };
+
+      (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
+      (User.findOne as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(
+        mockUserToAdd,
+      );
+
+      await eventController.addAttendee(mockRequest as Request, mockResponse as Response);
+
+      expect(mockEvent.attendees).toHaveLength(1);
+      expect(mockEvent.attendees[0].user).toBe('newUser456');
+      expect(mockEvent.save).toHaveBeenCalled();
+      expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ message: 'Attendee added' }));
+    });
+
+    it('should fail if user to add does not exist', async () => {
+      mockRequest.params = { id: 'event123' };
+      mockRequest.body = { email: 'ghost@example.com' };
+      const mockEvent = { organizer: 'user123', attendees: [] };
+
+      (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
+      (User.findOne as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(null);
+
+      await eventController.addAttendee(mockRequest as Request, mockResponse as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(404);
     });
   });
 });

@@ -9,6 +9,9 @@ import { SnackbarProvider } from 'notistack';
 
 vi.mock('@/api/client');
 vi.mock('@/hooks/useAuth');
+vi.mock('@/components/atoms/MapPreview/MapPreview', () => ({
+  default: () => <div data-testid="map-preview">Map Preview</div>,
+}));
 
 const createTestQueryClient = () =>
   new QueryClient({
@@ -68,5 +71,43 @@ describe('EventDetails Invitation Flow', () => {
     await waitFor(() => {
       expect(clientApi.joinEvent).toHaveBeenCalledWith('123', ['Setter']);
     });
+  });
+
+  it('hides Join Event button for organizer', async () => {
+    const mockEvent = {
+      _id: '123',
+      title: 'Organizer Event',
+      date: new Date().toISOString(),
+      location: 'Test Location',
+      attendees: [],
+      organizer: { _id: 'user123', firstName: 'John' }, // Matches logged in user
+      type: 'VOLLEYBALL',
+      format: 'OPEN_GYM',
+    };
+
+    (clientApi.getEvent as unknown as Mock).mockResolvedValue({ data: { event: mockEvent } });
+
+    // Reset joinEvent mock to ensure no calls
+    (clientApi.joinEvent as unknown as Mock).mockClear();
+
+    const client = createTestQueryClient();
+
+    render(
+      <QueryClientProvider client={client}>
+        <SnackbarProvider>
+          <MemoryRouter initialEntries={['/events/123']}>
+            <Routes>
+              <Route path="/events/:id" element={<EventDetails />} />
+            </Routes>
+          </MemoryRouter>
+        </SnackbarProvider>
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Organizer Event')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Join Event')).not.toBeInTheDocument();
   });
 });

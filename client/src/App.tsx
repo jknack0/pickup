@@ -46,7 +46,7 @@ class ErrorBoundary extends Component<
 function App() {
   return (
     <ErrorBoundary>
-      <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''}>
+      <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''} libraries={['places']}>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider theme={theme}>
             <CssBaseline />

@@ -3,13 +3,17 @@ import {
   Container,
   Typography,
   Box,
-  Paper,
   Button,
   CircularProgress,
   Alert,
   Divider,
   Avatar,
   AvatarGroup,
+  Grid,
+  Card,
+  CardContent,
+  Stack,
+  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -22,13 +26,27 @@ import {
   ButtonGroup,
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import ShareIcon from '@mui/icons-material/Share';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getEvent, joinEvent, updateRSVP } from '@/api/client';
 import { AttendeeStatus } from '@pickup/shared';
 import type { IEvent } from '@pickup/shared';
 import { useSnackbar } from 'notistack';
 import { useUser } from '@hooks/useAuth';
+import MapPreview from '@/components/atoms/MapPreview/MapPreview';
+import {
+  useEvent,
+  useJoinEvent,
+  useUpdateRSVP,
+  useCancelEvent,
+  useRemoveAttendee,
+  useAddAttendee,
+} from '@/hooks/useEvents';
+import { EventStatus } from '@pickup/shared';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import TextField from '@mui/material/TextField';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -45,56 +63,85 @@ const EventDetails: React.FC = () => {
   const [searchParams] = useSearchParams();
   const shouldJoin = searchParams.get('join') === 'true';
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['event', id],
-    queryFn: () => getEvent(id as string),
-    enabled: !!id,
-  });
+  // Queries and Mutations
+  const { data: eventData, isLoading, error } = useEvent(id as string);
+  const { mutate: join } = useJoinEvent(id as string);
+  const { mutate: updateStatus } = useUpdateRSVP(id as string);
+  const { mutate: cancel } = useCancelEvent(id as string);
+  const { mutate: remove } = useRemoveAttendee(id as string);
+  const { mutate: add } = useAddAttendee(id as string);
 
-  // Join mutation
-  const { mutate: join } = useMutation({
-    mutationFn: (positions?: string[]) => joinEvent(id as string, positions),
-    onSuccess: (responseData) => {
-      enqueueSnackbar('You have joined the event!', { variant: 'success' });
+  // Wrappers for side effects
+  const executeJoin = (positions?: string[]) => {
+    join(positions || [], {
+      onSuccess: () => {
+        enqueueSnackbar('You have joined the event!', { variant: 'success' });
+        setPositionDialogOpen(false);
+        navigate(`/events/${id}`, { replace: true });
+      },
+      onError: (err: unknown) => {
+        const error = err as { response?: { status: number; data?: { message?: string } } };
+        if (error.response?.status === 400) {
+          enqueueSnackbar(error.response?.data?.message || 'Failed to join', { variant: 'info' });
+        } else {
+          enqueueSnackbar('Failed to join event', { variant: 'error' });
+        }
+        navigate(`/events/${id}`, { replace: true });
+      },
+    });
+  };
 
-      setPositionDialogOpen(false); // Close dialog if open
+  const executeUpdateStatus = (status: AttendeeStatus) => {
+    updateStatus(status, {
+      onSuccess: () => {
+        enqueueSnackbar('RSVP updated', { variant: 'success' });
+      },
+      onError: () => {
+        enqueueSnackbar('Failed to update RSVP', { variant: 'error' });
+      },
+    });
+  };
 
-      // Update cache immediately with the updated event from the response
-      queryClient.setQueryData(
-        ['event', id],
-        (oldData: { data: { event: IEvent } } | undefined) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            data: {
-              ...oldData.data,
-              event: responseData.data.event,
-            },
-          };
-        },
-      );
+  const executeCancel = () => {
+    cancel(undefined, {
+      onSuccess: () => {
+        enqueueSnackbar('Event canceled', { variant: 'success' });
+        handleMenuClose();
+      },
+      onError: () => enqueueSnackbar('Failed to cancel event', { variant: 'error' }),
+    });
+  };
 
-      queryClient.invalidateQueries({ queryKey: ['event', id] });
-      navigate(`/events/${id}`, { replace: true });
-    },
-    onError: (err: unknown) => {
-      const error = err as { response?: { status: number; data?: { message?: string } } };
-      if (error.response?.status === 400) {
-        enqueueSnackbar(error.response?.data?.message || 'Failed to join', { variant: 'info' });
-      } else {
-        enqueueSnackbar('Failed to join event', { variant: 'error' });
-      }
-      navigate(`/events/${id}`, { replace: true });
-    },
-  });
+  const executeRemove = (targetUserId: string) => {
+    remove(targetUserId, {
+      onSuccess: () => {
+        enqueueSnackbar('Attendee removed', { variant: 'success' });
+      },
+      onError: () => enqueueSnackbar('Failed to remove attendee', { variant: 'error' }),
+    });
+  };
+
+  const executeAdd = () => {
+    add(attendeeEmail, {
+      onSuccess: () => {
+        enqueueSnackbar('Attendee added successfully', { variant: 'success' });
+        setAddAttendeeDialogOpen(false);
+        setAttendeeEmail('');
+      },
+      onError: (err: unknown) => {
+        const error = err as { response?: { data?: { message?: string } } };
+        const msg = error.response?.data?.message || 'Failed to add attendee';
+        enqueueSnackbar(msg, { variant: 'error' });
+      },
+    });
+  };
 
   const handleJoinClick = () => {
-    if (data?.data?.event?.type === 'VOLLEYBALL') {
+    if (eventData?.type === 'VOLLEYBALL') {
       setPositionDialogOpen(true);
     } else {
-      join(undefined);
+      executeJoin(undefined);
     }
   };
 
@@ -105,13 +152,13 @@ const EventDetails: React.FC = () => {
   };
 
   const handleConfirmJoin = () => {
-    join(selectedPositions);
+    executeJoin(selectedPositions);
   };
 
   // Attempt join if param exists and we have data
   React.useEffect(() => {
-    if (shouldJoin && id && data && userId) {
-      const event: IEvent = data.data.event;
+    if (shouldJoin && id && eventData && userId) {
+      const event: IEvent = eventData;
       // Attendee check: handle object structure
       const isAlreadyAttending = event.attendees.some(
         (att) => (typeof att === 'object' ? att.user : att) === userId,
@@ -121,38 +168,31 @@ const EventDetails: React.FC = () => {
         if (event.type === 'VOLLEYBALL') {
           setPositionDialogOpen(true);
         } else {
-          join(undefined);
+          executeJoin(undefined);
         }
       } else {
         enqueueSnackbar('You are already attending this event.', { variant: 'info' });
         navigate(`/events/${id}`, { replace: true });
       }
     }
-  }, [shouldJoin, id, join, data, userId, enqueueSnackbar, navigate]);
-
-  // RSVP mutation
-  const { mutate: updateStatus } = useMutation({
-    mutationFn: (status: AttendeeStatus) => updateRSVP(id as string, status),
-    onSuccess: (responseData) => {
-      queryClient.setQueryData(['event', id], (old: { data: { event: IEvent } } | undefined) => {
-        if (!old) return old;
-        return {
-          ...old,
-          data: { ...old.data, event: responseData.data.event },
-        };
-      });
-      enqueueSnackbar('RSVP updated', { variant: 'success' });
-    },
-    onError: () => {
-      enqueueSnackbar('Failed to update RSVP', { variant: 'error' });
-    },
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldJoin, id, eventData, userId]); // Dependencies simplified
 
   const handleMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
   const handleMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  // Add Attendee Dialog State
+  const [addAttendeeDialogOpen, setAddAttendeeDialogOpen] = React.useState(false);
+  const [attendeeEmail, setAttendeeEmail] = React.useState('');
+
+  const handleRemoveAttendee = (userId: string) => {
+    if (window.confirm('Are you sure you want to remove this attendee?')) {
+      executeRemove(userId);
+    }
   };
 
   const handleShare = () => {
@@ -170,7 +210,7 @@ const EventDetails: React.FC = () => {
     );
   }
 
-  if (error || !data) {
+  if (error || !eventData) {
     return (
       <Container sx={{ mt: 4 }}>
         <Alert severity="error">Failed to load event details.</Alert>
@@ -178,7 +218,7 @@ const EventDetails: React.FC = () => {
     );
   }
 
-  const event: IEvent = data.data.event;
+  const event: IEvent = eventData;
 
   // Render Logic
   const attendeeRecord = event.attendees.find(
@@ -190,99 +230,294 @@ const EventDetails: React.FC = () => {
     ? (attendeeRecord as unknown as { status: AttendeeStatus }).status
     : null;
 
+  const organizerId =
+    typeof event.organizer === 'object'
+      ? (event.organizer as unknown as { _id: string })._id
+      : event.organizer;
+  const isOrganizer = organizerId === userId;
+
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
+      {/* Header Section */}
+      <Box mb={4}>
         <Box display="flex" justifyContent="space-between" alignItems="flex-start">
           <Box>
-            <Typography variant="h3" component="h1" gutterBottom>
+            <Typography variant="h3" component="h1" fontWeight="bold" gutterBottom>
               {event.title}
             </Typography>
-            <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-              {new Date(event.date).toLocaleString()}
-            </Typography>
-            <Typography variant="h6" color="primary" gutterBottom>
-              {event.location}
-            </Typography>
-            <Box mt={1} display="flex" gap={1}>
-              <Typography
-                variant="body2"
-                sx={{ bgcolor: 'secondary.main', color: 'white', px: 1, borderRadius: 1 }}
-              >
-                {event.type.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
-              </Typography>
-              <Typography variant="body2" sx={{ bgcolor: 'grey.300', px: 1, borderRadius: 1 }}>
-                {event.format.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
-              </Typography>
+            <Box display="flex" gap={1} mb={2}>
+              <Chip
+                label={event.type.replace(/_/g, ' ')}
+                color="secondary"
+                sx={{ fontWeight: 'bold' }}
+              />
+              <Chip
+                label={event.format.replace(/_/g, ' ')}
+                variant="outlined"
+                sx={{ bgcolor: 'background.paper' }}
+              />
+              {event.status === EventStatus.CANCELED && (
+                <Chip label="CANCELED" color="error" sx={{ fontWeight: 'bold' }} />
+              )}
             </Box>
           </Box>
-          <Box display="flex" gap={1} alignItems="center">
-            {!isAttending && (
-              <Button variant="contained" onClick={handleJoinClick}>
+
+          <Box display="flex" gap={1}>
+            <IconButton onClick={handleShare} title="Share">
+              <ShareIcon />
+            </IconButton>
+            {!isAttending && !isOrganizer && event.status !== EventStatus.CANCELED && (
+              <Button variant="contained" size="large" onClick={handleJoinClick}>
                 Join Event
               </Button>
             )}
-            <IconButton onClick={handleMenuClick}>
-              <MoreVertIcon />
-            </IconButton>
+            {isOrganizer && (
+              <IconButton onClick={handleMenuClick}>
+                <MoreVertIcon />
+              </IconButton>
+            )}
             <Menu anchorEl={anchorEl} open={openMenu} onClose={handleMenuClose}>
               <MenuItem onClick={handleShare}>Share Event</MenuItem>
+              {isOrganizer && event.status !== EventStatus.CANCELED && (
+                <MenuItem
+                  onClick={() => {
+                    if (window.confirm('Cancel this event? This cannot be undone.'))
+                      executeCancel();
+                  }}
+                  sx={{ color: 'error.main' }}
+                >
+                  Cancel Event
+                </MenuItem>
+              )}
             </Menu>
           </Box>
         </Box>
+      </Box>
 
-        <Divider sx={{ my: 3 }} />
+      <Grid container spacing={4}>
+        {/* Left Column: Main Content */}
+        <Grid size={{ xs: 12, md: 8 }}>
+          <Card elevation={0} variant="outlined">
+            <CardContent>
+              <Typography variant="h5" gutterBottom fontWeight="600">
+                About this Event
+              </Typography>
+              <Box my={2}>
+                <Divider />
+              </Box>
+              <Typography variant="body1" paragraph sx={{ whiteSpace: 'pre-line' }}>
+                {event.description || 'No description provided by the organizer.'}
+              </Typography>
+            </CardContent>
+          </Card>
 
-        <Typography variant="body1" paragraph>
-          {event.description || 'No description provided.'}
-        </Typography>
+          {/* Future: Comments Section */}
+        </Grid>
 
-        <Box mt={4}>
-          <Typography variant="h6" gutterBottom>
-            Attendees
-          </Typography>
-          <AvatarGroup max={5} sx={{ justifyContent: 'flex-start' }}>
-            {event.attendees.map((att, index) => {
-              // att is likely IAttendee object but with populated User
-              const person = att as unknown as { user: { firstName: string } };
-              const firstName = person.user?.firstName || '?';
-              // Could eventually color code ring based on status
-              return <Avatar key={index}>{firstName[0]}</Avatar>;
-            })}
-          </AvatarGroup>
-        </Box>
+        {/* Right Column: Sidebar */}
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Stack spacing={3}>
+            {/* Maps & Location Card */}
+            <Card elevation={2}>
+              {event.coordinates && (
+                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                  <MapPreview
+                    lat={event.coordinates.lat}
+                    lng={event.coordinates.lng}
+                    height={200}
+                  />
+                </Box>
+              )}
+              <CardContent>
+                <Stack spacing={2}>
+                  <Box display="flex" gap={2} alignItems="center">
+                    <LocationOnIcon color="action" />
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Location
+                      </Typography>
+                      <Typography variant="body1" fontWeight="500">
+                        {event.location}
+                      </Typography>
+                    </Box>
+                  </Box>
 
-        {isAttending && (
-          <Box mt={4} display="flex" flexDirection="column" alignItems="center">
-            <Typography variant="subtitle2" gutterBottom>
-              Your RSVP
-            </Typography>
-            <ButtonGroup variant="outlined" aria-label="rsvp button group">
-              <Button
-                variant={currentStatus === AttendeeStatus.YES ? 'contained' : 'outlined'}
-                color="success"
-                onClick={() => updateStatus(AttendeeStatus.YES)}
-              >
-                Going
-              </Button>
-              <Button
-                variant={currentStatus === AttendeeStatus.MAYBE ? 'contained' : 'outlined'}
-                color="warning"
-                onClick={() => updateStatus(AttendeeStatus.MAYBE)}
-              >
-                Maybe
-              </Button>
-              <Button
-                variant={currentStatus === AttendeeStatus.NO ? 'contained' : 'outlined'}
-                color="error"
-                onClick={() => updateStatus(AttendeeStatus.NO)}
-              >
-                No
-              </Button>
-            </ButtonGroup>
-          </Box>
-        )}
-      </Paper>
+                  <Box display="flex" gap={2} alignItems="center">
+                    <CalendarTodayIcon color="action" />
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Date & Time
+                      </Typography>
+                      <Typography variant="body1" fontWeight="500">
+                        {new Date(event.date).toLocaleDateString(undefined, {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {new Date(event.date).toLocaleTimeString(undefined, {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+
+            {/* RSVP Actions (If Attending) */}
+            {isAttending && (
+              <Card elevation={2} sx={{ bgcolor: 'primary.50' }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom color="primary.main">
+                    Your RSVP
+                  </Typography>
+                  <ButtonGroup
+                    fullWidth
+                    variant="contained"
+                    aria-label="rsvp button group"
+                    size="small"
+                    sx={{ boxShadow: 0 }}
+                  >
+                    <Button
+                      color={currentStatus === AttendeeStatus.YES ? 'success' : 'inherit'}
+                      onClick={() => executeUpdateStatus(AttendeeStatus.YES)}
+                      sx={
+                        currentStatus !== AttendeeStatus.YES
+                          ? { bgcolor: 'white', color: 'text.primary' }
+                          : {}
+                      }
+                    >
+                      Going
+                    </Button>
+                    <Button
+                      color={currentStatus === AttendeeStatus.MAYBE ? 'warning' : 'inherit'}
+                      onClick={() => executeUpdateStatus(AttendeeStatus.MAYBE)}
+                      sx={
+                        currentStatus !== AttendeeStatus.MAYBE
+                          ? { bgcolor: 'white', color: 'text.primary' }
+                          : {}
+                      }
+                    >
+                      Maybe
+                    </Button>
+                    <Button
+                      color={currentStatus === AttendeeStatus.NO ? 'error' : 'inherit'}
+                      onClick={() => executeUpdateStatus(AttendeeStatus.NO)}
+                      sx={
+                        currentStatus !== AttendeeStatus.NO
+                          ? { bgcolor: 'white', color: 'text.primary' }
+                          : {}
+                      }
+                    >
+                      No
+                    </Button>
+                  </ButtonGroup>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Attendees Card */}
+            <Card elevation={0} variant="outlined">
+              <CardContent>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Typography variant="h6">Attendees</Typography>
+                    <Chip label={`${event.attendees.length}`} size="small" />
+                  </Box>
+                  {isOrganizer && event.status !== EventStatus.CANCELED && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setAddAttendeeDialogOpen(true)}
+                      title="Add Attendee"
+                      color="primary"
+                    >
+                      <PersonAddIcon />
+                    </IconButton>
+                  )}
+                </Box>
+
+                {/* List View for Organizer to Manage, Avatar Group for others */}
+                {isOrganizer ? (
+                  <Stack spacing={1} mt={1}>
+                    {event.attendees.map((att, index) => {
+                      const person = att as unknown as {
+                        user: { _id: string; firstName: string; lastName: string; email: string };
+                      };
+                      const name = person.user
+                        ? `${person.user.firstName} ${person.user.lastName || ''}`
+                        : 'Unknown';
+                      return (
+                        <Box
+                          key={index}
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          p={1}
+                          bgcolor="background.default"
+                          borderRadius={1}
+                        >
+                          <Box display="flex" alignItems="center" gap={2}>
+                            <Avatar sx={{ width: 32, height: 32, fontSize: '0.8rem' }}>
+                              {person.user?.firstName?.[0]}
+                            </Avatar>
+                            <Box>
+                              <Typography variant="body2" fontWeight="500">
+                                {name}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {person.user?.email}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          {/* Don't remove self */}
+                          {person.user?._id !== organizerId && (
+                            <IconButton
+                              size="small"
+                              onClick={() => handleRemoveAttendee(person.user?._id)}
+                              color="error"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          )}
+                        </Box>
+                      );
+                    })}
+                  </Stack>
+                ) : (
+                  <AvatarGroup max={7} sx={{ justifyContent: 'flex-start' }}>
+                    {event.attendees.map((att, index) => {
+                      const person = att as unknown as {
+                        user: { firstName: string; lastName: string };
+                      };
+                      const name = person.user
+                        ? `${person.user.firstName} ${person.user.lastName || ''}`
+                        : '?';
+                      return (
+                        <Avatar key={index} alt={name}>
+                          {person.user?.firstName?.[0]}
+                        </Avatar>
+                      );
+                    })}
+                  </AvatarGroup>
+                )}
+
+                <Box mt={2}>
+                  <Typography variant="body2" color="text.secondary">
+                    Organized by{' '}
+                    <strong>
+                      {(event.organizer as unknown as { firstName: string }).firstName}
+                    </strong>
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Stack>
+        </Grid>
+      </Grid>
 
       <Dialog open={positionDialogOpen} onClose={() => setPositionDialogOpen(false)}>
         <DialogTitle>Select Positions</DialogTitle>
@@ -310,6 +545,32 @@ const EventDetails: React.FC = () => {
           <Button onClick={() => setPositionDialogOpen(false)}>Cancel</Button>
           <Button onClick={handleConfirmJoin} variant="contained" autoFocus>
             Confirm & Join
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add Attendee Dialog */}
+      <Dialog open={addAttendeeDialogOpen} onClose={() => setAddAttendeeDialogOpen(false)}>
+        <DialogTitle>Add Attendee</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            Enter the email address of the user you want to add. They must have an account.
+          </Typography>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Email Address"
+            type="email"
+            fullWidth
+            variant="outlined"
+            value={attendeeEmail}
+            onChange={(e) => setAttendeeEmail(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddAttendeeDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => executeAdd()} variant="contained" disabled={!attendeeEmail}>
+            Add
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { AppBar } from '@atoms/AppBar';
 import { Toolbar } from '@atoms/Toolbar';
 import { Typography } from '@atoms/Typography';
@@ -12,10 +12,10 @@ import { ListItemText } from '@atoms/ListItemText';
 import { useNavigate } from 'react-router-dom';
 import { useLogout } from '@hooks/useAuth';
 import { useMyEvents } from '@hooks/useEvents';
-import { Collapse } from '@mui/material';
+import { Collapse, IconButton, useMediaQuery, useTheme } from '@mui/material';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
-import { useState } from 'react';
+import MenuIcon from '@mui/icons-material/Menu';
 
 const drawerWidth = 240;
 
@@ -28,6 +28,71 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const navigate = useNavigate();
   const { data: events } = useMyEvents();
   const [eventsOpen, setEventsOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const theme = useTheme();
+  // We can use this if we want conditional rendering logic in JS,
+  // but CSS display properties are often smoother for SSR/hydration.
+  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const drawerContent = (
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Toolbar />
+      <Box sx={{ overflow: 'auto', flexGrow: 1 }}>
+        <List>
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => {
+                navigate('/dashboard');
+                if (!isDesktop) setMobileOpen(false);
+              }}
+            >
+              <ListItemText primary="Dashboard" />
+            </ListItemButton>
+          </ListItem>
+
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => setEventsOpen(!eventsOpen)}>
+              <ListItemText primary="Events" />
+              {eventsOpen ? <ExpandLess /> : <ExpandMore />}
+            </ListItemButton>
+          </ListItem>
+          <Collapse in={eventsOpen} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {events?.map((event) => (
+                <ListItemButton
+                  key={event._id}
+                  sx={{ pl: 4 }}
+                  onClick={() => {
+                    navigate(`/events/${event._id}`);
+                    if (!isDesktop) setMobileOpen(false);
+                  }}
+                >
+                  <ListItemText primary={event.title} />
+                </ListItemButton>
+              ))}
+            </List>
+          </Collapse>
+        </List>
+      </Box>
+      <Box sx={{ borderTop: 1, borderColor: 'divider' }}>
+        <List>
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => logout(undefined, { onSuccess: () => navigate('/') })}
+              sx={{ justifyContent: 'center' }}
+            >
+              <ListItemText primary="Sign Out" primaryTypographyProps={{ align: 'center' }} />
+            </ListItemButton>
+          </ListItem>
+        </List>
+      </Box>
+    </Box>
+  );
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
@@ -39,75 +104,81 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           borderBottom: '1px solid',
           borderColor: 'divider',
           bgcolor: 'primary.main',
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          ml: { sm: `${drawerWidth}px` },
         }}
       >
         <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2, display: { md: 'none' }, color: 'background.default', zIndex: 1 }}
+          >
+            <MenuIcon />
+          </IconButton>
           <Typography
             variant="h6"
             noWrap
             component="div"
-            sx={{ fontWeight: 700, color: 'background.default' }}
+            sx={{
+              fontWeight: 700,
+              color: 'background.default',
+              // Mobile Center
+              position: { xs: 'absolute', md: 'static' },
+              left: { xs: '50%', md: 'auto' },
+              transform: { xs: 'translateX(-50%)', md: 'none' },
+            }}
           >
             Pickup
           </Typography>
         </Toolbar>
       </AppBar>
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
-        }}
-      >
-        <Toolbar />
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-          <Box sx={{ overflow: 'auto', flexGrow: 1 }}>
-            <List>
-              <ListItem disablePadding>
-                <ListItemButton onClick={() => navigate('/dashboard')}>
-                  <ListItemText primary="Dashboard" />
-                </ListItemButton>
-              </ListItem>
 
-              <ListItem disablePadding>
-                <ListItemButton onClick={() => setEventsOpen(!eventsOpen)}>
-                  <ListItemText primary="Events" />
-                  {eventsOpen ? <ExpandLess /> : <ExpandMore />}
-                </ListItemButton>
-              </ListItem>
-              <Collapse in={eventsOpen} timeout="auto" unmountOnExit>
-                <List component="div" disablePadding>
-                  {events?.map((event) => (
-                    <ListItemButton
-                      key={event._id}
-                      sx={{ pl: 4 }}
-                      onClick={() => navigate(`/events/${event._id}`)}
-                    >
-                      <ListItemText primary={event.title} />
-                    </ListItemButton>
-                  ))}
-                </List>
-              </Collapse>
-            </List>
-          </Box>
-          <Box sx={{ borderTop: 1, borderColor: 'divider' }}>
-            <List>
-              <ListItem disablePadding>
-                <ListItemButton
-                  onClick={() => logout(undefined, { onSuccess: () => navigate('/') })}
-                  sx={{ justifyContent: 'center' }}
-                >
-                  <ListItemText primary="Sign Out" primaryTypographyProps={{ align: 'center' }} />
-                </ListItemButton>
-              </ListItem>
-            </List>
-          </Box>
-        </Box>
-      </Drawer>
+      <Box
+        component="nav"
+        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+        aria-label="mailbox folders"
+      >
+        {/* Mobile Temporary Drawer */}
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{
+            keepMounted: true, // Better open performance on mobile.
+          }}
+          sx={{
+            display: { xs: 'block', sm: 'none' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+          }}
+        >
+          {drawerContent}
+        </Drawer>
+
+        {/* Desktop Permanent Drawer */}
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: 'none', sm: 'block' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+          }}
+          open
+        >
+          {drawerContent}
+        </Drawer>
+      </Box>
+
       <Box
         component="main"
-        sx={{ flexGrow: 1, width: '100%', display: 'flex', flexDirection: 'column' }}
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          display: 'flex',
+          flexDirection: 'column',
+        }}
       >
         <Toolbar />
         {children}

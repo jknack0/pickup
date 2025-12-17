@@ -17,6 +17,11 @@ const mockEvent: IEvent = {
 
 const mockNavigate = vi.fn();
 
+// Mock MapPreview
+vi.mock('@/components/atoms/MapPreview/MapPreview', () => ({
+  default: () => <div data-testid="map-preview">Map Preview</div>,
+}));
+
 vi.mock('react-router', async () => {
   const actual = await vi.importActual('react-router');
   return {
@@ -44,5 +49,18 @@ describe('EventCard', () => {
     );
     fireEvent.click(screen.getByText('View Details'));
     expect(mockNavigate).toHaveBeenCalledWith('/events/123');
+  });
+
+  it('renders map preview when coordinates are present', () => {
+    const eventWithCoords = {
+      ...mockEvent,
+      coordinates: { lat: 10, lng: 20 },
+    };
+    render(
+      <MemoryRouter>
+        <EventCard event={eventWithCoords} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByTestId('map-preview')).toBeInTheDocument();
   });
 });

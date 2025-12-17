@@ -11,6 +11,7 @@ jest.mock('@pickup/shared', () => ({
   EventFormat: { OPEN_GYM: 'OPEN_GYM' },
   EventPosition: { SETTER: 'Setter' },
   AttendeeStatus: { YES: 'YES', NO: 'NO', MAYBE: 'MAYBE', WAITLIST: 'WAITLIST' },
+  EventStatus: { ACTIVE: 'ACTIVE', CANCELED: 'CANCELED' },
 }));
 
 describe('Event Controller - RSVP', () => {

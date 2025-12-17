@@ -26,6 +26,11 @@ export enum AttendeeStatus {
     WAITLIST = 'WAITLIST',
 }
 
+export enum EventStatus {
+    ACTIVE = 'ACTIVE',
+    CANCELED = 'CANCELED',
+}
+
 export interface IAttendee {
     user: string; // User ID
     status: AttendeeStatus;
@@ -47,6 +52,7 @@ export interface IEvent {
     attendees: IAttendee[];
     type: EventType;
     format: EventFormat;
+    status: EventStatus;
     createdAt: Date | string;
     updatedAt: Date | string;
 }

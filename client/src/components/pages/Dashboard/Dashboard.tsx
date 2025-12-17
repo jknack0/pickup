@@ -1,17 +1,12 @@
 import React from 'react';
 import { Container, Typography, Button, Box, CircularProgress, Alert } from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
-import { getMyEvents } from '@/api/client';
+import { useMyEvents } from '@/hooks/useEvents';
 import EventCard from '@/components/molecules/EventCard/EventCard';
-import type { IEvent } from '@pickup/shared';
 import { useNavigate } from 'react-router';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['myEvents'],
-    queryFn: getMyEvents,
-  });
+  const { data: events = [], isLoading, error } = useMyEvents();
 
   if (isLoading) {
     return (
@@ -28,8 +23,6 @@ const Dashboard: React.FC = () => {
       </Container>
     );
   }
-
-  const events: IEvent[] = data?.data?.events || [];
 
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>

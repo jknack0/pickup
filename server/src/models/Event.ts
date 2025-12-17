@@ -1,5 +1,12 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { IEvent, EventType, EventFormat, EventPosition, AttendeeStatus } from '@pickup/shared';
+import {
+  IEvent,
+  EventType,
+  EventFormat,
+  EventPosition,
+  AttendeeStatus,
+  EventStatus,
+} from '@pickup/shared';
 
 export interface IEventDocument extends Document, Omit<IEvent, '_id'> {
   _id: mongoose.Types.ObjectId;
@@ -38,6 +45,12 @@ const EventSchema: Schema = new Schema(
       enum: Object.values(EventFormat),
       required: true,
       default: EventFormat.OPEN_GYM,
+    },
+    status: {
+      type: String,
+      enum: Object.values(EventStatus),
+      required: true,
+      default: EventStatus.ACTIVE,
     },
   },
   { timestamps: true },

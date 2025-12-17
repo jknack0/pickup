@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { TextField, Button, Box, Typography } from '@mui/material';
 import { CreateEventSchema, EventType, EventFormat } from '@pickup/shared';
 import type { CreateEventInput } from '@pickup/shared';
-import { createEvent } from '@/api/client';
+import { useCreateEvent } from '@/hooks/useEvents';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import LocationAutocomplete from '@/components/atoms/LocationAutocomplete/LocationAutocomplete';
@@ -35,6 +35,7 @@ const CreateEventForm: React.FC = () => {
 
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const { mutateAsync: createEvent } = useCreateEvent();
 
   const onSubmit = async (data: CreateEventInput) => {
     try {
