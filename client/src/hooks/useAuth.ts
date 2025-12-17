@@ -41,7 +41,7 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: login,
     onSuccess: (data) => {
-      queryClient.setQueryData(['me'], data.user);
+      queryClient.setQueryData(['me'], { user: data.user });
     },
   });
 };
@@ -51,7 +51,7 @@ export const useRegister = () => {
   return useMutation({
     mutationFn: register,
     onSuccess: (data) => {
-      queryClient.setQueryData(['me'], data.user);
+      queryClient.setQueryData(['me'], { user: data.user });
     },
   });
 };
@@ -61,7 +61,6 @@ export const useLogout = () => {
   return useMutation({
     mutationFn: logout,
     onSuccess: () => {
-      queryClient.setQueryData(['me'], null);
       queryClient.invalidateQueries({ queryKey: ['me'] });
     },
   });

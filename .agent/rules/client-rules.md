@@ -3,18 +3,13 @@ trigger: always_on
 description: Frontend Development Guidelines
 ---
 
----
-trigger: always_on
-description: Frontend Development Guidelines
----
-
-## 📜 Agent Rule Content Specification
+## ?? Agent Rule Content Specification
 
 This document defines the rules for the **Antigravity System (AG)** within the fictional universe and the mandatory **Frontend Development Guidelines** for all related application work.
 
 ---
 
-## 1. ⚙️ Antigravity (AG) System Rules
+## 1. ?? Antigravity (AG) System Rules
 
 These rules govern the physical characteristics, generation, and limitations of the Antigravity force.
 
@@ -38,7 +33,7 @@ These rules govern the physical characteristics, generation, and limitations of 
 
 ---
 
-## 2. ⚛️ Frontend Development Guidelines
+## 2. ?? Frontend Development Guidelines
 
 These rules are mandatory for all frontend work related to the AG Status Dashboard or any future component, ensuring codebase quality and consistency.
 
@@ -70,3 +65,27 @@ Development must strictly follow the **Atomic Design Methodology**. Before creat
     *   **Validation:** Use `mode: 'onBlur'` for field-level feedback.
     *   **Server Errors:** Bind server-side field errors to the form using `setError` via a standard error handler.
 *   **Notifications:** Use `notistack` (`enqueueSnackbar`) for global feedback (success/error toasts). Do not use inline alerts for transient states.
+
+### 2.3 Component Structure (Strict Enforcement)
+
+**EVERY** component (Atom, Molecule, Organism, Template, Page) **MUST** reside in its own dedicated directory.
+
+**Required Structure:**
+```
+src/components/[Level]/[ComponentName]/
++-- [ComponentName].tsx       # The component implementation
++-- [ComponentName].test.tsx  # The component tests (co-located)
++-- index.ts                  # Export file
+```
+
+**Index File Content:**
+The `index.ts` file must export the component as default and/or named export to ensure clean imports.
+```typescript
+export { default } from './[ComponentName]';
+export * from './[ComponentName]';
+```
+
+**Consumers:**
+Consumers **MUST** import from the directory level, NOT the file level.
+- ? `import Foo from '@/components/atoms/Foo';`
+- ? `import Foo from '@/components/atoms/Foo/Foo';`

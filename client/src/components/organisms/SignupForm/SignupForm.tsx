@@ -1,4 +1,5 @@
-import { Paper } from '@mui/material';
+import { Paper, Box, Typography, Link } from '@mui/material';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSnackbar } from 'notistack';
@@ -11,6 +12,7 @@ import { type RegisterInput, registerSchema } from '@pickup/shared';
 export const SignupForm = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { mutate: registerUser, isPending } = useRegister();
+  const location = useLocation();
 
   const {
     register,
@@ -21,6 +23,21 @@ export const SignupForm = () => {
     resolver: zodResolver(registerSchema),
     mode: 'onBlur',
   });
+  // ... existing code ...
+  <Box sx={{ mt: 2, textAlign: 'center' }}>
+    <Typography variant="body2" color="text.secondary">
+      Already have an account?{' '}
+      <Link
+        component={RouterLink}
+        to="/login"
+        state={location.state}
+        underline="hover"
+        sx={{ fontWeight: 600 }}
+      >
+        Log In
+      </Link>
+    </Typography>
+  </Box>;
 
   const onSubmit = (data: RegisterInput) => {
     registerUser(data, {
@@ -92,6 +109,14 @@ export const SignupForm = () => {
         >
           {isPending ? 'Signing Up...' : 'Sign Up'}
         </Button>
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary">
+            Already have an account?{' '}
+            <Link component={RouterLink} to="/login" underline="hover" sx={{ fontWeight: 600 }}>
+              Log In
+            </Link>
+          </Typography>
+        </Box>
       </form>
     </Paper>
   );

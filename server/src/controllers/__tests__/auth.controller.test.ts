@@ -41,12 +41,14 @@ describe('Auth Controller', () => {
       // Mock the User constructor to return an object with save
       const mockSave = jest.fn().mockResolvedValue({
         _id: 'userid',
+        id: 'userid',
         firstName: 'Test',
         lastName: 'User',
         email: 'test@test.com',
       });
       const mockUserInstance = {
         _id: 'userid',
+        id: 'userid',
         firstName: 'Test',
         lastName: 'User',
         email: 'test@test.com',
@@ -61,7 +63,7 @@ describe('Auth Controller', () => {
       expect(res.cookie).toHaveBeenCalledWith('token', 'mocktoken', expect.any(Object));
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
-        user: { id: 'userid', firstName: 'Test', lastName: 'User', email: 'test@test.com' },
+        user: { _id: 'userid', firstName: 'Test', lastName: 'User', email: 'test@test.com' },
       });
     });
 
@@ -81,6 +83,7 @@ describe('Auth Controller', () => {
       req.body = { email: 'test@test.com', password: 'password' };
       const mockUser = {
         _id: 'userid',
+        id: 'userid',
         firstName: 'Test',
         lastName: 'User',
         email: 'test@test.com',
@@ -94,7 +97,7 @@ describe('Auth Controller', () => {
       expect(mockUser.comparePassword).toHaveBeenCalledWith('password');
       expect(res.cookie).toHaveBeenCalledWith('token', 'mocktoken', expect.any(Object));
       expect(res.json).toHaveBeenCalledWith({
-        user: { id: 'userid', firstName: 'Test', lastName: 'User', email: 'test@test.com' },
+        user: { _id: 'userid', firstName: 'Test', lastName: 'User', email: 'test@test.com' },
       });
     });
 

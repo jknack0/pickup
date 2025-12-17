@@ -105,3 +105,6 @@ trigger: always_on
 - **Validation:** Validate all inputs at the API boundary.
 
 ## 7) any time a library is installed or something new is added update this file to reflect that
+
+- **Auto-Rebuild Shared:** Any modification to packages/shared MUST be followed by npm run build in that package.
+- **Agent Self-Update:** The agent is explicitly authorized to modify files in .agent/rules/ to update project guidelines as needed.

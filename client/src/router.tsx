@@ -2,7 +2,9 @@ import { createBrowserRouter } from 'react-router-dom';
 import { Signup } from '@pages/Signup';
 import { Login } from '@pages/Login';
 import { Landing } from '@pages/Landing';
-import { DashboardHome } from '@pages/DashboardHome';
+import Dashboard from '@/components/pages/Dashboard/Dashboard';
+import CreateEvent from '@/components/pages/CreateEvent/CreateEvent';
+import EventDetails from '@/components/pages/EventDetails/EventDetails';
 import { MainLayout } from '@templates/MainLayout';
 import { ProtectedLayout } from '@templates/ProtectedLayout';
 import { Outlet } from 'react-router-dom';
@@ -21,7 +23,6 @@ export const router = createBrowserRouter([
     element: <Login />,
   },
   {
-    path: '/dashboard',
     element: (
       <ProtectedLayout>
         <MainLayout>
@@ -31,10 +32,17 @@ export const router = createBrowserRouter([
     ),
     children: [
       {
-        index: true,
-        element: <DashboardHome />,
+        path: '/dashboard',
+        element: <Dashboard />,
       },
-      // Future sub-routes can go here
+      {
+        path: '/events/new',
+        element: <CreateEvent />,
+      },
+      {
+        path: '/events/:id',
+        element: <EventDetails />,
+      },
     ],
   },
 ]);

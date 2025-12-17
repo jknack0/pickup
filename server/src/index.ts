@@ -14,6 +14,9 @@ import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
 import logger from '@/utils/logger.js';
 import authRoutes from '@/routes/auth.routes.js';
+import eventRoutes from '@/routes/event.routes.js';
+
+import { requestLogger } from '@/middleware/requestLogger.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -26,8 +29,10 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+app.use(requestLogger);
 
 app.use('/api/auth', authRoutes);
+app.use('/api/events', eventRoutes);
 
 // Serve static files only in production
 if (process.env.NODE_ENV === 'production') {

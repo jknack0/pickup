@@ -4,7 +4,7 @@ export default {
     roots: ['<rootDir>/src'],
     extensionsToTreatAsEsm: ['.ts'],
     moduleNameMapper: {
-        '^@pickup/shared$': '<rootDir>/../packages/shared/src',
+        '^@pickup/shared$': '<rootDir>/../packages/shared/dist/index.js',
         '^@/(.*)\\.js$': '<rootDir>/src/$1',
         '^@/(.*)$': '<rootDir>/src/$1',
         '^(\\.{1,2}/.*)\\.js$': '$1',

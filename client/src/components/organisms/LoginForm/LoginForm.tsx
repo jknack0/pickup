@@ -1,4 +1,5 @@
-import { Paper } from '@mui/material';
+import { Paper, Box, Typography, Link } from '@mui/material';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { Button } from '@atoms/Button';
 import { AuthHeader } from '@molecules/AuthHeader';
 import { LoginFields } from '@molecules/LoginFields';
@@ -23,6 +24,7 @@ interface ApiError {
 export const LoginForm = () => {
   const { mutate: login, isPending } = useLogin();
   const { enqueueSnackbar } = useSnackbar();
+  const location = useLocation();
 
   const {
     register,
@@ -33,6 +35,21 @@ export const LoginForm = () => {
     resolver: zodResolver(loginSchema),
     mode: 'onBlur',
   });
+  // ... existing code ...
+  <Box sx={{ mt: 2, textAlign: 'center' }}>
+    <Typography variant="body2" color="text.secondary">
+      Don't have an account?{' '}
+      <Link
+        component={RouterLink}
+        to="/signup"
+        state={location.state}
+        underline="hover"
+        sx={{ fontWeight: 600 }}
+      >
+        Sign Up
+      </Link>
+    </Typography>
+  </Box>;
 
   const onSubmit = (data: LoginInput) => {
     login(data, {
@@ -97,6 +114,14 @@ export const LoginForm = () => {
         >
           {isPending ? 'Logging in...' : 'Log In'}
         </Button>
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary">
+            Don't have an account?{' '}
+            <Link component={RouterLink} to="/signup" underline="hover" sx={{ fontWeight: 600 }}>
+              Sign Up
+            </Link>
+          </Typography>
+        </Box>
       </form>
     </Paper>
   );
