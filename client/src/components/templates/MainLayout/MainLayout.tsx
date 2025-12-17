@@ -2,6 +2,7 @@ import { type ReactNode, useState } from 'react';
 import { AppBar } from '@atoms/AppBar';
 import { Toolbar } from '@atoms/Toolbar';
 import { Typography } from '@atoms/Typography';
+import { Container } from '@atoms/Container';
 import { Drawer } from '@atoms/Drawer';
 import { Box } from '@atoms/Box';
 import { List } from '@atoms/List';
@@ -104,36 +105,36 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           borderBottom: '1px solid',
           borderColor: 'divider',
           bgcolor: 'primary.main',
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
         }}
       >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: 'none' }, color: 'background.default', zIndex: 1 }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography
-            variant="h6"
-            noWrap
-            component="div"
-            sx={{
-              fontWeight: 700,
-              color: 'background.default',
-              // Mobile Center
-              position: { xs: 'absolute', md: 'static' },
-              left: { xs: '50%', md: 'auto' },
-              transform: { xs: 'translateX(-50%)', md: 'none' },
-            }}
-          >
-            Pickup
-          </Typography>
-        </Toolbar>
+        <Container maxWidth="lg">
+          <Toolbar disableGutters>
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, display: { md: 'none' }, color: 'background.default', zIndex: 1 }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={{
+                fontWeight: 700,
+                color: 'background.default',
+                // Mobile Center
+                position: { xs: 'absolute', md: 'static' },
+                left: { xs: '50%', md: 'auto' },
+                transform: { xs: 'translateX(-50%)', md: 'none' },
+              }}
+            >
+              Pickup
+            </Typography>
+          </Toolbar>
+        </Container>
       </AppBar>
 
       <Box

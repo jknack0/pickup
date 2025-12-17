@@ -110,4 +110,44 @@ describe('EventDetails Invitation Flow', () => {
 
     expect(screen.queryByText('Join Event')).not.toBeInTheDocument();
   });
+
+  it('hides Join Event button for existing attendee', async () => {
+    const mockEvent = {
+      _id: '124',
+      title: 'Attending Event',
+      date: new Date().toISOString(),
+      location: 'Test Location',
+      attendees: [
+        {
+          user: { _id: 'user123', firstName: 'John', lastName: 'Doe', email: 'john@example.com' },
+          status: 'YES',
+        },
+      ],
+      organizer: { _id: 'otherUser', firstName: 'Jane' },
+      type: 'VOLLEYBALL',
+      format: 'OPEN_GYM',
+    };
+
+    (clientApi.getEvent as unknown as Mock).mockResolvedValue({ data: { event: mockEvent } });
+
+    const client = createTestQueryClient();
+
+    render(
+      <QueryClientProvider client={client}>
+        <SnackbarProvider>
+          <MemoryRouter initialEntries={['/events/124']}>
+            <Routes>
+              <Route path="/events/:id" element={<EventDetails />} />
+            </Routes>
+          </MemoryRouter>
+        </SnackbarProvider>
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Attending Event')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Join Event')).not.toBeInTheDocument();
+  });
 });

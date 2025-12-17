@@ -87,6 +87,7 @@ const EventDetails: React.FC = () => {
         } else {
           enqueueSnackbar('Failed to join event', { variant: 'error' });
         }
+        setPositionDialogOpen(false);
         navigate(`/events/${id}`, { replace: true });
       },
     });
@@ -160,9 +161,13 @@ const EventDetails: React.FC = () => {
     if (shouldJoin && id && eventData && userId) {
       const event: IEvent = eventData;
       // Attendee check: handle object structure
-      const isAlreadyAttending = event.attendees.some(
-        (att) => (typeof att === 'object' ? att.user : att) === userId,
-      );
+      const isAlreadyAttending = event.attendees.some((att) => {
+        const attUserId =
+          typeof att.user === 'object' && att.user !== null
+            ? (att.user as unknown as { _id: string })._id
+            : att.user;
+        return attUserId === userId;
+      });
 
       if (!isAlreadyAttending) {
         if (event.type === 'VOLLEYBALL') {
@@ -221,9 +226,13 @@ const EventDetails: React.FC = () => {
   const event: IEvent = eventData;
 
   // Render Logic
-  const attendeeRecord = event.attendees.find(
-    (att) => (typeof att === 'object' ? att.user : att) === userId,
-  );
+  const attendeeRecord = event.attendees.find((att) => {
+    const attUserId =
+      typeof att.user === 'object' && att.user !== null
+        ? (att.user as unknown as { _id: string })._id
+        : att.user;
+    return attUserId === userId;
+  });
   const isAttending = !!attendeeRecord;
   // Safe cast for status access since we verified existence
   const currentStatus = isAttending
@@ -231,7 +240,7 @@ const EventDetails: React.FC = () => {
     : null;
 
   const organizerId =
-    typeof event.organizer === 'object'
+    typeof event.organizer === 'object' && event.organizer !== null
       ? (event.organizer as unknown as { _id: string })._id
       : event.organizer;
   const isOrganizer = organizerId === userId;
