@@ -2,7 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import { Signup } from '@pages/Signup';
 import { Login } from '@pages/Login';
 import { Landing } from '@pages/Landing';
-import Dashboard from '@/components/pages/Dashboard/Dashboard';
+import Dashboard from '@/components/pages/Dashboard';
 import CreateEvent from '@/components/pages/CreateEvent/CreateEvent';
 import EventDetails from '@/components/pages/EventDetails/EventDetails';
 import { MainLayout } from '@templates/MainLayout';

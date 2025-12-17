@@ -2,7 +2,7 @@ import React from 'react';
 import { Container, Typography, Button, Box, CircularProgress, Alert } from '@mui/material';
 import { useMyEvents } from '@/hooks/useEvents';
 import EventCard from '@/components/molecules/EventCard/EventCard';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
