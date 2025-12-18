@@ -26,6 +26,7 @@ describe('User Model', () => {
       lastName: 'User',
       email: 'test@example.com',
       passwordHash: 'plainPassword123',
+      dateOfBirth: new Date('2000-01-01'),
     });
 
     await user.save();
@@ -39,6 +40,7 @@ describe('User Model', () => {
       lastName: 'User',
       email: 'test@test.com',
       passwordHash: 'secret',
+      dateOfBirth: new Date('2000-01-01'),
     });
     await user.save();
 

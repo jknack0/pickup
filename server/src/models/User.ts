@@ -2,8 +2,9 @@ import mongoose, { Schema, Document } from 'mongoose';
 import { RegisterInput } from '@pickup/shared';
 import bcrypt from 'bcrypt';
 
-export interface IUser extends RegisterInput, Document {
+export interface IUser extends Omit<RegisterInput, 'dateOfBirth' | 'confirmPassword'>, Document {
   passwordHash: string;
+  dateOfBirth: Date;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -15,6 +16,7 @@ const UserSchema: Schema = new Schema(
     lastName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     passwordHash: { type: String, required: true },
+    dateOfBirth: { type: Date, required: true },
   },
   { timestamps: true },
 );
