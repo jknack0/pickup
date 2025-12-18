@@ -4,7 +4,11 @@ import User from '@/models/User.js';
 import logger from '@/utils/logger.js';
 
 const generateToken = (userId: string) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET as string, {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET is not set');
+  }
+  return jwt.sign({ id: userId }, secret, {
     expiresIn: '7d',
   });
 };

@@ -70,8 +70,8 @@ export const CreateEventSchema = z.object({
             lng: z.number(),
         })
         .optional(),
-    type: z.nativeEnum(EventType).default(EventType.VOLLEYBALL),
-    format: z.nativeEnum(EventFormat).default(EventFormat.OPEN_GYM),
+    type: z.nativeEnum(EventType),
+    format: z.nativeEnum(EventFormat),
 });
 
 export type CreateEventInput = z.infer<typeof CreateEventSchema>;

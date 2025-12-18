@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:prod": "export VITE_API_URL=/api && tsc -b && vite build",
     "lint": "eslint . --fix",
     "lint:staged": "eslint --fix",
     "format": "prettier --write .",

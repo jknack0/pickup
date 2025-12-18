@@ -3,10 +3,13 @@ import { Container, Typography, Button, Box, CircularProgress, Alert } from '@mu
 import { useMyEvents } from '@/hooks/useEvents';
 import EventCard from '@/components/molecules/EventCard/EventCard';
 import { useNavigate } from 'react-router-dom';
+import { EventStatus } from '@pickup/shared';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { data: events = [], isLoading, error } = useMyEvents();
+
+  const activeEvents = events.filter((event) => event.status !== EventStatus.CANCELED);
 
   if (isLoading) {
     return (
@@ -33,10 +36,10 @@ const Dashboard: React.FC = () => {
         </Button>
       </Box>
 
-      {events.length === 0 ? (
+      {activeEvents.length === 0 ? (
         <Typography variant="body1">You haven't created or joined any events yet.</Typography>
       ) : (
-        events.map((event) => <EventCard key={event._id} event={event} />)
+        activeEvents.map((event) => <EventCard key={event._id} event={event} />)
       )}
     </Container>
   );

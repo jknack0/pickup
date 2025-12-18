@@ -108,3 +108,6 @@ trigger: always_on
 
 - **Auto-Rebuild Shared:** Any modification to packages/shared MUST be followed by npm run build in that package.
 - **Agent Self-Update:** The agent is explicitly authorized to modify files in .agent/rules/ to update project guidelines as needed.
+
+## 8) Agent Output Preferences
+- **Docker Commands:** Do NOT use the backslash \ character for line continuation in Docker commands. Always provide the full command on a single line or use multiple separate commands if necessary. This is to ensure compatibility with all user terminals (e.g., PowerShell).

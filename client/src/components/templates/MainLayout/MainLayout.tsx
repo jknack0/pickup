@@ -17,6 +17,7 @@ import { Collapse, IconButton, useMediaQuery, useTheme } from '@mui/material';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import MenuIcon from '@mui/icons-material/Menu';
+import { EventStatus } from '@pickup/shared';
 
 const drawerWidth = 240;
 
@@ -39,6 +40,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
+
+  const filteredEvents = events?.filter((event) => event.status !== EventStatus.CANCELED);
 
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -64,7 +67,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           </ListItem>
           <Collapse in={eventsOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              {events?.map((event) => (
+              {filteredEvents?.map((event) => (
                 <ListItemButton
                   key={event._id}
                   sx={{ pl: 4 }}

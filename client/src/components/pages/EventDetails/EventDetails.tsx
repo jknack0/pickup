@@ -47,6 +47,7 @@ import { EventStatus } from '@pickup/shared';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import TextField from '@mui/material/TextField';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ConfirmationDialog from '@/components/molecules/ConfirmationDialog';
 
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -56,6 +57,9 @@ const EventDetails: React.FC = () => {
   const [selectedPositions, setSelectedPositions] = React.useState<string[]>([]);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const openMenu = Boolean(anchorEl);
+
+  // Confirmation Dialog State
+  const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
 
   const { data: userData } = useUser();
   const userId = userData?.user?._id;
@@ -68,7 +72,7 @@ const EventDetails: React.FC = () => {
   const { data: eventData, isLoading, error } = useEvent(id as string);
   const { mutate: join } = useJoinEvent(id as string);
   const { mutate: updateStatus } = useUpdateRSVP(id as string);
-  const { mutate: cancel } = useCancelEvent(id as string);
+  const { mutate: cancel, isPending: isCanceling } = useCancelEvent(id as string);
   const { mutate: remove } = useRemoveAttendee(id as string);
   const { mutate: add } = useAddAttendee(id as string);
 
@@ -108,9 +112,13 @@ const EventDetails: React.FC = () => {
     cancel(undefined, {
       onSuccess: () => {
         enqueueSnackbar('Event canceled', { variant: 'success' });
+        setCancelDialogOpen(false);
         handleMenuClose();
       },
-      onError: () => enqueueSnackbar('Failed to cancel event', { variant: 'error' }),
+      onError: () => {
+        enqueueSnackbar('Failed to cancel event', { variant: 'error' });
+        setCancelDialogOpen(false);
+      },
     });
   };
 
@@ -290,8 +298,7 @@ const EventDetails: React.FC = () => {
               {isOrganizer && event.status !== EventStatus.CANCELED && (
                 <MenuItem
                   onClick={() => {
-                    if (window.confirm('Cancel this event? This cannot be undone.'))
-                      executeCancel();
+                    setCancelDialogOpen(true);
                   }}
                   sx={{ color: 'error.main' }}
                 >
@@ -583,6 +590,17 @@ const EventDetails: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmationDialog
+        open={cancelDialogOpen}
+        title="Cancel Event"
+        content="Are you sure you want to cancel this event? This action cannot be undone and all attendees will be notified."
+        onConfirm={executeCancel}
+        onCancel={() => setCancelDialogOpen(false)}
+        confirmText="Yes, Cancel Event"
+        confirmColor="error"
+        isLoading={isCanceling}
+      />
     </Container>
   );
 };
