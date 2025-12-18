@@ -56,7 +56,10 @@ describe('Event Controller', () => {
         toJSON: () => mockRequest.body,
       }));
 
-      await eventController.createEvent(mockRequest as Request, mockResponse as Response);
+      await eventController.createEvent(
+        mockRequest as unknown as Request,
+        mockResponse as unknown as Response,
+      );
 
       expect(Event).toHaveBeenCalledWith({
         ...mockRequest.body,
@@ -71,7 +74,10 @@ describe('Event Controller', () => {
 
     it('should return 401 if user is not authenticated', async () => {
       mockRequest.user = undefined;
-      await eventController.createEvent(mockRequest as Request, mockResponse as Response);
+      await eventController.createEvent(
+        mockRequest as unknown as Request,
+        mockResponse as unknown as Response,
+      );
       expect(statusMock).toHaveBeenCalledWith(401);
     });
   });
@@ -90,7 +96,10 @@ describe('Event Controller', () => {
 
       (Event.findById as unknown as jest.Mock).mockReturnValue({ populate: mockPopulate1 });
 
-      await eventController.getEvent(mockRequest as Request, mockResponse as Response);
+      await eventController.getEvent(
+        mockRequest as unknown as Request,
+        mockResponse as unknown as Response,
+      );
 
       expect(Event.findById).toHaveBeenCalledWith('event123');
       expect(mockPopulate1).toHaveBeenCalledWith('organizer', 'firstName lastName email');
@@ -109,7 +118,10 @@ describe('Event Controller', () => {
 
       (Event.findById as unknown as jest.Mock).mockReturnValue({ populate: mockPopulate1 });
 
-      await eventController.getEvent(mockRequest as Request, mockResponse as Response);
+      await eventController.getEvent(
+        mockRequest as unknown as Request,
+        mockResponse as unknown as Response,
+      );
 
       expect(statusMock).toHaveBeenCalledWith(404);
     });
@@ -129,7 +141,10 @@ describe('Event Controller', () => {
       // Ensure proper typing for Mongoose resolves
       (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
 
-      await eventController.joinEvent(mockRequest as Request, mockResponse as Response);
+      await eventController.joinEvent(
+        mockRequest as unknown as Request,
+        mockResponse as unknown as Response,
+      );
 
       expect(mockEvent.attendees).toHaveLength(1);
       expect(mockEvent.attendees[0]).toEqual(
@@ -151,7 +166,10 @@ describe('Event Controller', () => {
       };
       (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
 
-      await eventController.joinEvent(mockRequest as Request, mockResponse as Response);
+      await eventController.joinEvent(
+        mockRequest as unknown as Request,
+        mockResponse as unknown as Response,
+      );
 
       expect(statusMock).toHaveBeenCalledWith(400);
     });
@@ -168,7 +186,10 @@ describe('Event Controller', () => {
       };
       (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
 
-      await eventController.cancelEvent(mockRequest as Request, mockResponse as Response);
+      await eventController.cancelEvent(
+        mockRequest as unknown as Request,
+        mockResponse as unknown as Response,
+      );
 
       expect(mockEvent.status).toBe('CANCELED');
       expect(mockEvent.save).toHaveBeenCalled();
@@ -185,7 +206,10 @@ describe('Event Controller', () => {
       };
       (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
 
-      await eventController.cancelEvent(mockRequest as Request, mockResponse as Response);
+      await eventController.cancelEvent(
+        mockRequest as unknown as Request,
+        mockResponse as unknown as Response,
+      );
 
       expect(statusMock).toHaveBeenCalledWith(403);
     });
@@ -202,7 +226,10 @@ describe('Event Controller', () => {
       };
       (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
 
-      await eventController.removeAttendee(mockRequest as Request, mockResponse as Response);
+      await eventController.removeAttendee(
+        mockRequest as unknown as Request,
+        mockResponse as unknown as Response,
+      );
 
       expect(mockEvent.attendees).toHaveLength(1);
       expect(mockEvent.attendees[0].user).toBe('user123'); // Target removed
@@ -221,7 +248,10 @@ describe('Event Controller', () => {
       };
       (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
 
-      await eventController.removeAttendee(mockRequest as Request, mockResponse as Response);
+      await eventController.removeAttendee(
+        mockRequest as unknown as Request,
+        mockResponse as unknown as Response,
+      );
 
       expect(statusMock).toHaveBeenCalledWith(403);
     });
@@ -245,7 +275,10 @@ describe('Event Controller', () => {
         mockUserToAdd,
       );
 
-      await eventController.addAttendee(mockRequest as Request, mockResponse as Response);
+      await eventController.addAttendee(
+        mockRequest as unknown as Request,
+        mockResponse as unknown as Response,
+      );
 
       expect(mockEvent.attendees).toHaveLength(1);
       expect(mockEvent.attendees[0].user).toBe('newUser456');
@@ -261,7 +294,10 @@ describe('Event Controller', () => {
       (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
       (User.findOne as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(null);
 
-      await eventController.addAttendee(mockRequest as Request, mockResponse as Response);
+      await eventController.addAttendee(
+        mockRequest as unknown as Request,
+        mockResponse as unknown as Response,
+      );
 
       expect(statusMock).toHaveBeenCalledWith(404);
     });

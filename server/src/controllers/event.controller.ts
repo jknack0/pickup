@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import Event from '@/models/Event.js';
+import Event, { IEventDocument } from '@/models/Event.js';
+import User from '@/models/User.js';
 import { CreateEventInput, AttendeeStatus, EventStatus } from '@pickup/shared';
 import logger from '@/utils/logger.js';
 
@@ -8,6 +9,9 @@ interface AuthRequest extends Request {
     id: string;
   };
 }
+
+const isOrganizer = (event: IEventDocument, userId: string) =>
+  event.organizer.toString() === userId;
 
 export const createEvent = async (req: Request, res: Response) => {
   try {
@@ -170,7 +174,7 @@ export const cancelEvent = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Event not found' });
     }
 
-    if (event.organizer.toString() !== userId) {
+    if (!isOrganizer(event, userId)) {
       return res.status(403).json({ message: 'Only the organizer can cancel this event' });
     }
 
@@ -201,7 +205,7 @@ export const removeAttendee = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Event not found' });
     }
 
-    if (event.organizer.toString() !== userId) {
+    if (!isOrganizer(event, userId)) {
       return res.status(403).json({ message: 'Only the organizer can remove attendees' });
     }
 
@@ -219,7 +223,6 @@ export const removeAttendee = async (req: Request, res: Response) => {
 };
 
 // Start of Add Attendee
-import User from '@/models/User.js';
 
 export const addAttendee = async (req: Request, res: Response) => {
   try {
@@ -236,7 +239,7 @@ export const addAttendee = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Event not found' });
     }
 
-    if (event.organizer.toString() !== userId) {
+    if (!isOrganizer(event, userId)) {
       return res.status(403).json({ message: 'Only the organizer can add attendees' });
     }
 

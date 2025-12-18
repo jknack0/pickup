@@ -56,7 +56,7 @@ export const HomeHeader = () => {
       sx={{ borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'primary.main' }}
     >
       <Container maxWidth="lg">
-        <Toolbar disableGutters>
+        <Toolbar disableGutters sx={{ position: 'relative' }}>
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -72,14 +72,12 @@ export const HomeHeader = () => {
             noWrap
             component="div"
             sx={{
-              flexGrow: 1,
               fontWeight: 700,
               cursor: 'pointer',
               color: 'background.default',
-              position: { xs: 'absolute', md: 'static' },
-              // Let's just use width 100% and text-align center, but Icon is on top flow.
-              // If we use absolute, we need to make sure we don't block the button.
-              // Simplified approach: atomic styling adjustments.
+              position: 'absolute',
+              left: '50%',
+              transform: 'translateX(-50%)',
             }}
             onClick={() => navigate('/')}
           >
