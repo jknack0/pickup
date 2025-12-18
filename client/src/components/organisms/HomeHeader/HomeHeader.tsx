@@ -75,9 +75,10 @@ export const HomeHeader = () => {
               fontWeight: 700,
               cursor: 'pointer',
               color: 'background.default',
-              position: 'absolute',
-              left: '50%',
-              transform: 'translateX(-50%)',
+              position: { xs: 'absolute', md: 'static' },
+              left: { xs: '50%', md: 'auto' },
+              transform: { xs: 'translateX(-50%)', md: 'none' },
+              flexGrow: { md: 1 },
             }}
             onClick={() => navigate('/')}
           >
