@@ -22,6 +22,7 @@ describe('Auth Controller', () => {
       clearCookie: jest.fn(),
     };
     jest.clearAllMocks();
+    process.env.JWT_SECRET = 'test_secret';
   });
 
   describe('register', () => {
