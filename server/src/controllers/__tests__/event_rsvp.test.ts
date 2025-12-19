@@ -1,4 +1,4 @@
-import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from 'express';
 import * as eventController from '../event.controller.js';
 import Event from '@/models/Event.js';
@@ -19,10 +19,18 @@ describe('Event Controller - RSVP', () => {
   let mockResponse: Partial<Response>;
   let jsonMock: jest.Mock;
   let statusMock: jest.Mock;
+  let mockNext: jest.Mock;
 
   beforeEach(() => {
     jsonMock = jest.fn();
     statusMock = jest.fn().mockReturnValue({ json: jsonMock });
+
+    mockNext = jest.fn().mockImplementation((error: any) => {
+      if (error) {
+        statusMock(error.statusCode || 500).json({ message: error.message || 'Server Error' });
+      }
+    });
+
     mockResponse = {
       status: statusMock,
       json: jsonMock,
@@ -32,6 +40,7 @@ describe('Event Controller - RSVP', () => {
       body: {},
       params: {},
     };
+    // mockNext = jest.fn(); // Removed redundant assignment
   });
 
   describe('updateRSVP', () => {
@@ -46,11 +55,9 @@ describe('Event Controller - RSVP', () => {
       };
 
       // Correct generic type to match expected Promise return
-      (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(
-        eventWithArray,
-      );
+      (Event.findById as any).mockResolvedValue(eventWithArray);
 
-      await eventController.updateRSVP(mockRequest as Request, mockResponse as Response);
+      await eventController.updateRSVP(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(eventWithArray.attendees[0].status).toBe('NO');
       expect(eventWithArray.save).toHaveBeenCalled();
@@ -64,11 +71,9 @@ describe('Event Controller - RSVP', () => {
         save: jest.fn(),
         populate: jest.fn(),
       };
-      (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(
-        eventWithArray,
-      );
+      (Event.findById as any).mockResolvedValue(eventWithArray);
 
-      await eventController.updateRSVP(mockRequest as Request, mockResponse as Response);
+      await eventController.updateRSVP(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith(

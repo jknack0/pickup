@@ -12,15 +12,29 @@ jest.mock('@/utils/logger'); // Mock logger to suppress logs during tests
 describe('Auth Controller', () => {
   let req: Partial<Request>;
   let res: Partial<Response>;
+  let next: jest.Mock;
+  let jsonMock: jest.Mock;
+  let statusMock: jest.Mock;
+  let mockNext: jest.Mock;
 
   beforeEach(() => {
     req = { body: {} };
+    jsonMock = jest.fn();
+    statusMock = jest.fn().mockReturnValue({ json: jsonMock });
+    mockNext = jest.fn().mockImplementation((error: unknown) => {
+      const err = error as { statusCode?: number; message?: string };
+      if (err) {
+        statusMock(err.statusCode || 500).json({ message: err.message });
+      }
+    });
+
     res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
+      status: statusMock,
+      json: jsonMock,
       cookie: jest.fn(),
       clearCookie: jest.fn(),
     };
+    next = mockNext;
     jest.clearAllMocks();
     process.env.JWT_SECRET = 'test_secret';
   });
@@ -57,14 +71,15 @@ describe('Auth Controller', () => {
       };
       (User as unknown as jest.Mock).mockImplementation(() => mockUserInstance);
 
-      await register(req as Request, res as Response);
+      await register(req as Request, res as Response, next);
 
       expect(User.findOne).toHaveBeenCalledWith({ email: 'test@test.com' });
       expect(mockSave).toHaveBeenCalled();
       expect(res.cookie).toHaveBeenCalledWith('token', 'mocktoken', expect.any(Object));
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
-        user: { _id: 'userid', firstName: 'Test', lastName: 'User', email: 'test@test.com' },
+        message: 'User registered successfully',
+        user: { id: 'userid', firstName: 'Test', lastName: 'User', email: 'test@test.com' },
       });
     });
 
@@ -72,7 +87,7 @@ describe('Auth Controller', () => {
       req.body = { name: 'Test', email: 'existing@test.com', password: 'password123' };
       (User.findOne as jest.Mock).mockResolvedValue({ _id: 'existing' });
 
-      await register(req as Request, res as Response);
+      await register(req as Request, res as Response, next);
 
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({ message: 'User already exists' });
@@ -93,12 +108,13 @@ describe('Auth Controller', () => {
       (User.findOne as jest.Mock).mockResolvedValue(mockUser);
       (jwt.sign as jest.Mock).mockReturnValue('mocktoken');
 
-      await login(req as Request, res as Response);
+      await login(req as Request, res as Response, next);
 
       expect(mockUser.comparePassword).toHaveBeenCalledWith('password');
       expect(res.cookie).toHaveBeenCalledWith('token', 'mocktoken', expect.any(Object));
       expect(res.json).toHaveBeenCalledWith({
-        user: { _id: 'userid', firstName: 'Test', lastName: 'User', email: 'test@test.com' },
+        message: 'Logged in successfully',
+        user: { id: 'userid', firstName: 'Test', lastName: 'User', email: 'test@test.com' },
       });
     });
 
@@ -109,10 +125,10 @@ describe('Auth Controller', () => {
       };
       (User.findOne as jest.Mock).mockResolvedValue(mockUser);
 
-      await login(req as Request, res as Response);
+      await login(req as Request, res as Response, next);
 
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Invalid credentials' });
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Invalid email or password' });
     });
   });
 });

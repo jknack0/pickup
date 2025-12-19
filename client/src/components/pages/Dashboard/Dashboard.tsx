@@ -9,7 +9,10 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { data: events = [], isLoading, error } = useMyEvents();
 
-  const activeEvents = events.filter((event) => event.status !== EventStatus.CANCELED);
+  const activeEvents = React.useMemo(
+    () => events.filter((event) => event.status !== EventStatus.CANCELED),
+    [events],
+  );
 
   if (isLoading) {
     return (

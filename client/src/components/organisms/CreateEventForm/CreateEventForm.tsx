@@ -113,7 +113,7 @@ const CreateEventForm: React.FC = () => {
         fullWidth
         id="type"
         label="Event Type"
-        defaultValue="VOLLEYBALL"
+        defaultValue={EventType.VOLLEYBALL}
         error={!!errors.type}
         helperText={errors.type?.message}
         {...register('type')}
@@ -121,7 +121,7 @@ const CreateEventForm: React.FC = () => {
           native: true,
         }}
       >
-        <option value="VOLLEYBALL">Volleyball</option>
+        <option value={EventType.VOLLEYBALL}>Volleyball</option>
       </TextField>
 
       <TextField
@@ -130,7 +130,7 @@ const CreateEventForm: React.FC = () => {
         fullWidth
         id="format"
         label="Event Format"
-        defaultValue="OPEN_GYM"
+        defaultValue={EventFormat.OPEN_GYM}
         error={!!errors.format}
         helperText={errors.format?.message}
         {...register('format')}
@@ -138,9 +138,9 @@ const CreateEventForm: React.FC = () => {
           native: true,
         }}
       >
-        <option value="OPEN_GYM">Open Gym</option>
-        <option value="LEAGUE">League</option>
-        <option value="TOURNAMENT">Tournament</option>
+        <option value={EventFormat.OPEN_GYM}>Open Gym</option>
+        <option value={EventFormat.LEAGUE}>League</option>
+        <option value={EventFormat.TOURNAMENT}>Tournament</option>
       </TextField>
 
       <TextField

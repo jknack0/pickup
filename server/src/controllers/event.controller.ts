@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import Event, { IEventDocument } from '@/models/Event.js';
 import User from '@/models/User.js';
 import { CreateEventInput, AttendeeStatus, EventStatus } from '@pickup/shared';
-import logger from '@/utils/logger.js';
+import { asyncHandler } from '@/utils/asyncHandler.js';
+import { AppError } from '@/middleware/error.middleware.js';
 
 interface AuthRequest extends Request {
   user?: {
@@ -13,260 +14,218 @@ interface AuthRequest extends Request {
 const isOrganizer = (event: IEventDocument, userId: string) =>
   event.organizer.toString() === userId;
 
-export const createEvent = async (req: Request, res: Response) => {
-  try {
-    const { title, description, date, location, type, format, coordinates } =
-      req.body as CreateEventInput;
-    const userId = (req as AuthRequest).user?.id;
+export const createEvent = asyncHandler(async (req: Request, res: Response) => {
+  const { title, description, date, location, type, format, coordinates } =
+    req.body as CreateEventInput;
+  const userId = (req as AuthRequest).user?.id;
 
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    const event = new Event({
-      title,
-      description,
-      date,
-      location,
-      coordinates,
-      type,
-      format,
-      organizer: userId,
-      attendees: [{ user: userId, status: AttendeeStatus.YES, positions: [] }], // Organizer is automatically an attendee
-    });
-
-    await event.save();
-
-    // Populate organizer details for the response
-    await event.populate('organizer', 'firstName lastName email');
-    await event.populate('attendees.user', 'firstName lastName email');
-
-    res.status(201).json({ event });
-  } catch (error) {
-    logger.error('Create event error', error);
-    res.status(500).json({ message: 'Server error' });
+  if (!userId) {
+    throw new AppError('Unauthorized', 401);
   }
-};
 
-export const getEvent = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const event = await Event.findById(id)
-      .populate('organizer', 'firstName lastName email')
-      .populate('attendees.user', 'firstName lastName email');
+  const event = new Event({
+    title,
+    description,
+    date,
+    location,
+    coordinates,
+    type,
+    format,
+    organizer: userId,
+    attendees: [{ user: userId, status: AttendeeStatus.YES, positions: [] }], // Organizer is automatically an attendee
+  });
 
-    if (!event) {
-      return res.status(404).json({ message: 'Event not found' });
-    }
+  await event.save();
 
-    res.json({ event });
-  } catch (error) {
-    logger.error('Get event error', error);
-    res.status(500).json({ message: 'Server error' });
+  // Populate organizer details for the response
+  await event.populate('organizer', 'firstName lastName email');
+  await event.populate('attendees.user', 'firstName lastName email');
+
+  res.status(201).json({ event });
+});
+
+export const getEvent = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const event = await Event.findById(id)
+    .populate('organizer', 'firstName lastName email')
+    .populate('attendees.user', 'firstName lastName email');
+
+  if (!event) {
+    throw new AppError('Event not found', 404);
   }
-};
 
-export const listMyEvents = async (req: Request, res: Response) => {
-  try {
-    const userId = (req as AuthRequest).user?.id;
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
+  res.json({ event });
+});
 
-    // Find events where user is organizer OR is in attendees list (by checking attendees.user)
-    const events = await Event.find({
-      $or: [{ organizer: userId }, { 'attendees.user': userId }],
-    })
-      .sort({ date: 1 }) // Closest dates first
-      .populate('organizer', 'firstName lastName email')
-      .populate('attendees.user', 'firstName lastName email');
-
-    res.json({ events });
-  } catch (error) {
-    logger.error('List my events error', error);
-    res.status(500).json({ message: 'Server error' });
+export const listMyEvents = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as AuthRequest).user?.id;
+  if (!userId) {
+    throw new AppError('Unauthorized', 401);
   }
-};
 
-export const joinEvent = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { positions } = req.body; // Expect positions in body
-    const userId = (req as AuthRequest).user?.id;
+  // Find events where user is organizer OR is in attendees list (by checking attendees.user)
+  const events = await Event.find({
+    $or: [{ organizer: userId }, { 'attendees.user': userId }],
+  })
+    .sort({ date: 1 }) // Closest dates first
+    .populate('organizer', 'firstName lastName email')
+    .populate('attendees.user', 'firstName lastName email');
 
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
+  res.json({ events });
+});
 
-    const event = await Event.findById(id);
-    if (!event) {
-      return res.status(404).json({ message: 'Event not found' });
-    }
+export const joinEvent = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { positions } = req.body; // Expect positions in body
+  const userId = (req as AuthRequest).user?.id;
 
-    // Check if user is already attending
-    if (event.attendees.some((att) => att.user.toString() === userId)) {
-      return res.status(400).json({ message: 'You have already joined this event' });
-    }
-
-    event.attendees.push({
-      user: userId,
-      status: AttendeeStatus.YES,
-      positions: positions || [], // Default to empty if not provided
-      joinedAt: new Date(),
-    });
-
-    await event.save();
-
-    // Re-populate for response
-    await event.populate('attendees.user', 'firstName lastName email');
-
-    res.json({ message: 'Joined event successfully', event });
-  } catch (error) {
-    logger.error('Join event error', error);
-    res.status(500).json({ message: 'Server error' });
+  if (!userId) {
+    throw new AppError('Unauthorized', 401);
   }
-};
 
-export const updateRSVP = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-    const userId = (req as AuthRequest).user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    const event = await Event.findById(id);
-    if (!event) {
-      return res.status(404).json({ message: 'Event not found' });
-    }
-
-    const attendeeIndex = event.attendees.findIndex((att) => att.user.toString() === userId);
-    if (attendeeIndex === -1) {
-      return res.status(400).json({ message: 'You differ not attending this event' });
-    }
-
-    // Update status
-    event.attendees[attendeeIndex].status = status;
-
-    await event.save();
-    await event.populate('attendees.user', 'firstName lastName email');
-
-    res.json({ message: 'RSVP updated', event });
-  } catch (error) {
-    logger.error('Update RSVP error', error);
-    res.status(500).json({ message: 'Server error' });
+  const event = await Event.findById(id);
+  if (!event) {
+    throw new AppError('Event not found', 404);
   }
-};
 
-export const cancelEvent = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const userId = (req as AuthRequest).user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    const event = await Event.findById(id);
-    if (!event) {
-      return res.status(404).json({ message: 'Event not found' });
-    }
-
-    if (!isOrganizer(event, userId)) {
-      return res.status(403).json({ message: 'Only the organizer can cancel this event' });
-    }
-
-    event.status = EventStatus.CANCELED;
-    await event.save();
-
-    await event.populate('organizer', 'firstName lastName email');
-    await event.populate('attendees.user', 'firstName lastName email');
-
-    res.json({ message: 'Event canceled', event });
-  } catch (error) {
-    logger.error('Cancel event error', error);
-    res.status(500).json({ message: 'Server error' });
+  // Check if user is already attending
+  if (event.attendees.some((att) => att.user.toString() === userId)) {
+    throw new AppError('You have already joined this event', 400);
   }
-};
 
-export const removeAttendee = async (req: Request, res: Response) => {
-  try {
-    const { id, userId: targetUserId } = req.params;
-    const userId = (req as AuthRequest).user?.id;
+  event.attendees.push({
+    user: userId,
+    status: AttendeeStatus.YES,
+    positions: positions || [], // Default to empty if not provided
+    joinedAt: new Date(),
+  });
 
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
+  await event.save();
 
-    const event = await Event.findById(id);
-    if (!event) {
-      return res.status(404).json({ message: 'Event not found' });
-    }
+  // Re-populate for response
+  await event.populate('attendees.user', 'firstName lastName email');
 
-    if (!isOrganizer(event, userId)) {
-      return res.status(403).json({ message: 'Only the organizer can remove attendees' });
-    }
+  res.json({ message: 'Joined event successfully', event });
+});
 
-    event.attendees = event.attendees.filter((att) => att.user.toString() !== targetUserId);
-    await event.save();
+export const updateRSVP = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  const userId = (req as AuthRequest).user?.id;
 
-    await event.populate('attendees.user', 'firstName lastName email');
-    await event.populate('organizer', 'firstName lastName email');
-
-    res.json({ message: 'Attendee removed', event });
-  } catch (error) {
-    logger.error('Remove attendee error', error);
-    res.status(500).json({ message: 'Server error' });
+  if (!userId) {
+    throw new AppError('Unauthorized', 401);
   }
-};
 
-// Start of Add Attendee
-
-export const addAttendee = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { email } = req.body;
-    const userId = (req as AuthRequest).user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    const event = await Event.findById(id);
-    if (!event) {
-      return res.status(404).json({ message: 'Event not found' });
-    }
-
-    if (!isOrganizer(event, userId)) {
-      return res.status(403).json({ message: 'Only the organizer can add attendees' });
-    }
-
-    const userToAdd = await User.findOne({ email });
-    if (!userToAdd) {
-      return res.status(404).json({ message: 'User with this email not found' });
-    }
-
-    if (event.attendees.some((att) => att.user.toString() === userToAdd._id.toString())) {
-      return res.status(400).json({ message: 'User is already attending' });
-    }
-
-    event.attendees.push({
-      user: userToAdd._id.toString(), // Store as string if interface expects string
-      status: AttendeeStatus.YES,
-      positions: [],
-      joinedAt: new Date(),
-    });
-
-    await event.save();
-
-    await event.populate('attendees.user', 'firstName lastName email');
-    await event.populate('organizer', 'firstName lastName email');
-
-    res.json({ message: 'Attendee added', event });
-  } catch (error) {
-    logger.error('Add attendee error', error);
-    res.status(500).json({ message: 'Server error' });
+  const event = await Event.findById(id);
+  if (!event) {
+    throw new AppError('Event not found', 404);
   }
-};
+
+  const attendeeIndex = event.attendees.findIndex((att) => att.user.toString() === userId);
+  if (attendeeIndex === -1) {
+    throw new AppError('You differ not attending this event', 400);
+  }
+
+  // Update status
+  event.attendees[attendeeIndex].status = status;
+
+  await event.save();
+  await event.populate('attendees.user', 'firstName lastName email');
+
+  res.json({ message: 'RSVP updated', event });
+});
+
+export const cancelEvent = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const userId = (req as AuthRequest).user?.id;
+
+  if (!userId) {
+    throw new AppError('Unauthorized', 401);
+  }
+
+  const event = await Event.findById(id);
+  if (!event) {
+    throw new AppError('Event not found', 404);
+  }
+
+  if (!isOrganizer(event, userId)) {
+    throw new AppError('Only the organizer can cancel this event', 403);
+  }
+
+  event.status = EventStatus.CANCELED;
+  await event.save();
+
+  await event.populate('organizer', 'firstName lastName email');
+  await event.populate('attendees.user', 'firstName lastName email');
+
+  res.json({ message: 'Event canceled', event });
+});
+
+export const removeAttendee = asyncHandler(async (req: Request, res: Response) => {
+  const { id, userId: targetUserId } = req.params;
+  const userId = (req as AuthRequest).user?.id;
+
+  if (!userId) {
+    throw new AppError('Unauthorized', 401);
+  }
+
+  const event = await Event.findById(id);
+  if (!event) {
+    throw new AppError('Event not found', 404);
+  }
+
+  if (!isOrganizer(event, userId)) {
+    throw new AppError('Only the organizer can remove attendees', 403);
+  }
+
+  event.attendees = event.attendees.filter((att) => att.user.toString() !== targetUserId);
+  await event.save();
+
+  await event.populate('attendees.user', 'firstName lastName email');
+  await event.populate('organizer', 'firstName lastName email');
+
+  res.json({ message: 'Attendee removed', event });
+});
+
+export const addAttendee = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { email } = req.body;
+  const userId = (req as AuthRequest).user?.id;
+
+  if (!userId) {
+    throw new AppError('Unauthorized', 401);
+  }
+
+  const event = await Event.findById(id);
+  if (!event) {
+    throw new AppError('Event not found', 404);
+  }
+
+  if (!isOrganizer(event, userId)) {
+    throw new AppError('Only the organizer can add attendees', 403);
+  }
+
+  const userToAdd = await User.findOne({ email });
+  if (!userToAdd) {
+    throw new AppError('User with this email not found', 404);
+  }
+
+  if (event.attendees.some((att) => att.user.toString() === userToAdd._id.toString())) {
+    throw new AppError('User is already attending', 400);
+  }
+
+  event.attendees.push({
+    user: userToAdd._id.toString(), // Store as string if interface expects string
+    status: AttendeeStatus.YES,
+    positions: [],
+    joinedAt: new Date(),
+  });
+
+  await event.save();
+
+  await event.populate('attendees.user', 'firstName lastName email');
+  await event.populate('organizer', 'firstName lastName email');
+
+  res.json({ message: 'Attendee added', event });
+});

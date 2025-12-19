@@ -1,4 +1,4 @@
-import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from 'express';
 import * as eventController from '../event.controller.js';
 import Event from '@/models/Event.js';
@@ -19,12 +19,20 @@ jest.mock('@pickup/shared', () => ({
 describe('Event Controller', () => {
   let mockRequest: Partial<Request> & { user?: { id: string } };
   let mockResponse: Partial<Response>;
+  let mockNext: jest.Mock;
   let jsonMock: jest.Mock;
   let statusMock: jest.Mock;
 
   beforeEach(() => {
     jsonMock = jest.fn();
     statusMock = jest.fn().mockReturnValue({ json: jsonMock });
+
+    mockNext = jest.fn().mockImplementation((error: any) => {
+      if (error) {
+        statusMock(error.statusCode || 500).json({ message: error.message || 'Server Error' });
+      }
+    });
+
     mockResponse = {
       status: statusMock,
       json: jsonMock,
@@ -34,6 +42,7 @@ describe('Event Controller', () => {
       body: {},
       params: {},
     };
+    jest.clearAllMocks();
   });
 
   describe('createEvent', () => {
@@ -50,7 +59,7 @@ describe('Event Controller', () => {
       const mockPopulate = jest.fn();
 
       // Mock Event constructor and instance methods
-      (Event as unknown as jest.Mock).mockImplementation(() => ({
+      (Event as any).mockImplementation(() => ({
         save: mockSave,
         populate: mockPopulate,
         toJSON: () => mockRequest.body,
@@ -59,6 +68,7 @@ describe('Event Controller', () => {
       await eventController.createEvent(
         mockRequest as unknown as Request,
         mockResponse as unknown as Response,
+        mockNext,
       );
 
       expect(Event).toHaveBeenCalledWith({
@@ -77,6 +87,7 @@ describe('Event Controller', () => {
       await eventController.createEvent(
         mockRequest as unknown as Request,
         mockResponse as unknown as Response,
+        mockNext,
       );
       expect(statusMock).toHaveBeenCalledWith(401);
     });
@@ -87,18 +98,17 @@ describe('Event Controller', () => {
       mockRequest.params = { id: 'event123' };
       const mockEvent = { title: 'Found Event' };
 
-      const mockPopulate2 = jest
-        .fn<(...args: unknown[]) => Promise<unknown>>()
-        .mockResolvedValue(mockEvent);
+      const mockPopulate2 = jest.fn().mockResolvedValue(mockEvent);
       // Declare mockPopulate1 before using it
-      const mockPopulate1 = jest.fn<(...args: unknown[]) => { populate: typeof mockPopulate2 }>();
+      const mockPopulate1 = jest.fn();
       mockPopulate1.mockReturnValue({ populate: mockPopulate2 });
 
-      (Event.findById as unknown as jest.Mock).mockReturnValue({ populate: mockPopulate1 });
+      (Event.findById as any).mockReturnValue({ populate: mockPopulate1 });
 
       await eventController.getEvent(
         mockRequest as unknown as Request,
         mockResponse as unknown as Response,
+        mockNext,
       );
 
       expect(Event.findById).toHaveBeenCalledWith('event123');
@@ -110,17 +120,16 @@ describe('Event Controller', () => {
     it('should return 404 if event not found', async () => {
       mockRequest.params = { id: 'event123' };
 
-      const mockPopulate2 = jest
-        .fn<(...args: unknown[]) => Promise<unknown>>()
-        .mockResolvedValue(null);
-      const mockPopulate1 = jest.fn<(...args: unknown[]) => { populate: typeof mockPopulate2 }>();
+      const mockPopulate2 = jest.fn().mockResolvedValue(null);
+      const mockPopulate1 = jest.fn();
       mockPopulate1.mockReturnValue({ populate: mockPopulate2 });
 
-      (Event.findById as unknown as jest.Mock).mockReturnValue({ populate: mockPopulate1 });
+      (Event.findById as any).mockReturnValue({ populate: mockPopulate1 });
 
       await eventController.getEvent(
         mockRequest as unknown as Request,
         mockResponse as unknown as Response,
+        mockNext,
       );
 
       expect(statusMock).toHaveBeenCalledWith(404);
@@ -139,11 +148,12 @@ describe('Event Controller', () => {
       };
 
       // Ensure proper typing for Mongoose resolves
-      (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
+      (Event.findById as any).mockResolvedValue(mockEvent);
 
       await eventController.joinEvent(
         mockRequest as unknown as Request,
         mockResponse as unknown as Response,
+        mockNext,
       );
 
       expect(mockEvent.attendees).toHaveLength(1);
@@ -164,11 +174,12 @@ describe('Event Controller', () => {
       const mockEvent = {
         attendees: [{ user: 'user123' }], // Already present
       };
-      (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
+      (Event.findById as any).mockResolvedValue(mockEvent);
 
       await eventController.joinEvent(
         mockRequest as unknown as Request,
         mockResponse as unknown as Response,
+        mockNext,
       );
 
       expect(statusMock).toHaveBeenCalledWith(400);
@@ -184,11 +195,12 @@ describe('Event Controller', () => {
         save: jest.fn(),
         populate: jest.fn(),
       };
-      (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
+      (Event.findById as any).mockResolvedValue(mockEvent);
 
       await eventController.cancelEvent(
         mockRequest as unknown as Request,
         mockResponse as unknown as Response,
+        mockNext,
       );
 
       expect(mockEvent.status).toBe('CANCELED');
@@ -204,11 +216,12 @@ describe('Event Controller', () => {
         organizer: 'user123',
         status: 'ACTIVE',
       };
-      (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
+      (Event.findById as any).mockResolvedValue(mockEvent);
 
       await eventController.cancelEvent(
         mockRequest as unknown as Request,
         mockResponse as unknown as Response,
+        mockNext,
       );
 
       expect(statusMock).toHaveBeenCalledWith(403);
@@ -224,11 +237,12 @@ describe('Event Controller', () => {
         save: jest.fn(),
         populate: jest.fn(),
       };
-      (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
+      (Event.findById as any).mockResolvedValue(mockEvent);
 
       await eventController.removeAttendee(
         mockRequest as unknown as Request,
         mockResponse as unknown as Response,
+        mockNext,
       );
 
       expect(mockEvent.attendees).toHaveLength(1);
@@ -246,11 +260,12 @@ describe('Event Controller', () => {
         organizer: 'user123',
         attendees: [],
       };
-      (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
+      (Event.findById as any).mockResolvedValue(mockEvent);
 
       await eventController.removeAttendee(
         mockRequest as unknown as Request,
         mockResponse as unknown as Response,
+        mockNext,
       );
 
       expect(statusMock).toHaveBeenCalledWith(403);
@@ -270,14 +285,13 @@ describe('Event Controller', () => {
       };
       const mockUserToAdd = { _id: 'newUser456', id: 'newUser456' };
 
-      (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
-      (User.findOne as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(
-        mockUserToAdd,
-      );
+      (Event.findById as any).mockResolvedValue(mockEvent);
+      (User.findOne as any).mockResolvedValue(mockUserToAdd);
 
       await eventController.addAttendee(
         mockRequest as unknown as Request,
         mockResponse as unknown as Response,
+        mockNext,
       );
 
       expect(mockEvent.attendees).toHaveLength(1);
@@ -291,12 +305,13 @@ describe('Event Controller', () => {
       mockRequest.body = { email: 'ghost@example.com' };
       const mockEvent = { organizer: 'user123', attendees: [] };
 
-      (Event.findById as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(mockEvent);
-      (User.findOne as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(null);
+      (Event.findById as any).mockResolvedValue(mockEvent);
+      (User.findOne as any).mockResolvedValue(null);
 
       await eventController.addAttendee(
         mockRequest as unknown as Request,
         mockResponse as unknown as Response,
+        mockNext,
       );
 
       expect(statusMock).toHaveBeenCalledWith(404);

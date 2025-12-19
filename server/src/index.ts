@@ -34,6 +34,9 @@ app.use(requestLogger);
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 
+import { errorHandler } from '@/middleware/error.middleware.js';
+app.use(errorHandler);
+
 // Serve static files only in production
 if (process.env.NODE_ENV === 'production') {
   const clientBuildPath = path.resolve(__dirname, '../../client/dist');

@@ -82,7 +82,10 @@ const EventDetails: React.FC = () => {
       onSuccess: () => {
         enqueueSnackbar('You have joined the event!', { variant: 'success' });
         setPositionDialogOpen(false);
-        navigate(`/events/${id}`, { replace: true });
+        // Remove the join param so it doesn't re-trigger
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('join');
+        navigate(`/events/${id}?${newParams.toString()}`, { replace: true });
       },
       onError: (err: unknown) => {
         const error = err as { response?: { status: number; data?: { message?: string } } };
@@ -92,7 +95,10 @@ const EventDetails: React.FC = () => {
           enqueueSnackbar('Failed to join event', { variant: 'error' });
         }
         setPositionDialogOpen(false);
-        navigate(`/events/${id}`, { replace: true });
+        // Also clear param on error to prevent infinite loops
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('join');
+        navigate(`/events/${id}?${newParams.toString()}`, { replace: true });
       },
     });
   };

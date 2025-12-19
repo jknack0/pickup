@@ -1,102 +1,77 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import User from '@/models/User.js';
-import logger from '@/utils/logger.js';
+import { RegisterInput, LoginInput } from '@pickup/shared';
+import { asyncHandler } from '@/utils/asyncHandler.js';
+import { AppError } from '@/middleware/error.middleware.js';
 
 const generateToken = (userId: string) => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET is not set');
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET as string, { expiresIn: '7d' });
+};
+
+export const register = asyncHandler(async (req: Request, res: Response) => {
+  const { email, password, firstName, lastName, dateOfBirth } = req.body as RegisterInput;
+
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    throw new AppError('User already exists', 400);
   }
-  return jwt.sign({ id: userId }, secret, {
-    expiresIn: '7d',
+
+  // Create user
+  const user = new User({ email, password, firstName, lastName, dateOfBirth });
+  await user.save();
+
+  const token = generateToken(user._id.toString());
+
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-origin (if separate domains)
   });
-};
 
-export const register = async (req: Request, res: Response) => {
-  try {
-    const { firstName, lastName, email, password, dateOfBirth } = req.body;
+  res.status(201).json({
+    message: 'User registered successfully',
+    user: { id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName },
+  });
+});
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
+export const login = asyncHandler(async (req: Request, res: Response) => {
+  const { email, password } = req.body as LoginInput;
 
-    // Hash is handled by pre-save hook
-    const user = new User({
-      firstName,
-      lastName,
-      email,
-      dateOfBirth,
-      passwordHash: password,
-    });
-
-    await user.save();
-
-    const token = generateToken(user._id.toString());
-
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      sameSite: 'strict',
-    });
-
-    res.status(201).json({
-      user: {
-        _id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-      },
-    });
-  } catch (error) {
-    logger.error('Registration error', error);
-    res.status(500).json({ message: 'Server error' });
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new AppError('Invalid email or password', 401);
   }
-};
 
-export const login = async (req: Request, res: Response) => {
-  try {
-    const { email, password } = req.body;
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
-
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
-
-    const token = generateToken(user._id.toString());
-
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: 'strict',
-    });
-
-    res.json({
-      user: {
-        _id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-      },
-    });
-  } catch (error) {
-    logger.error('Login error', error);
-    res.status(500).json({ message: 'Server error' });
+  const isMatch = await user.comparePassword(password);
+  if (!isMatch) {
+    throw new AppError('Invalid email or password', 401);
   }
-};
 
-export const logout = (req: Request, res: Response) => {
-  res.clearCookie('token');
+  const token = generateToken(user._id.toString());
+
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  });
+
+  res.json({
+    message: 'Logged in successfully',
+    user: { id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName },
+  });
+});
+
+export const logout = asyncHandler(async (req: Request, res: Response) => {
+  res.cookie('token', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    expires: new Date(0),
+  });
   res.json({ message: 'Logged out successfully' });
-};
+});
 
 interface AuthRequest extends Request {
   user?: {
@@ -104,15 +79,16 @@ interface AuthRequest extends Request {
   };
 }
 
-export const getMe = async (req: Request, res: Response) => {
-  try {
-    const userId = (req as AuthRequest).user?.id;
-    const user = await User.findById(userId).select('-passwordHash');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    res.json({ user });
-  } catch {
-    res.status(500).json({ message: 'Server error' });
+export const getMe = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as AuthRequest).user?.id;
+  if (!userId) {
+    throw new AppError('Unauthorized', 401);
   }
-};
+
+  const user = await User.findById(userId).select('-passwordHash');
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  res.json({ user });
+});
