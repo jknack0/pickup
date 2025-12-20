@@ -3,32 +3,23 @@ import {
   Container,
   Typography,
   Box,
-  Button,
   CircularProgress,
   Alert,
-  Divider,
-  Avatar,
-  AvatarGroup,
   Grid,
   Card,
   CardContent,
   Stack,
-  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   FormControlLabel,
   Checkbox,
-  IconButton,
-  Menu,
-  MenuItem,
-  ButtonGroup,
+  Button,
+  Divider,
 } from '@mui/material';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
-import ShareIcon from '@mui/icons-material/Share';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { AttendeeStatus } from '@pickup/shared';
 import type { IEvent } from '@pickup/shared';
@@ -44,10 +35,13 @@ import {
   useAddAttendee,
 } from '@/hooks/useEvents';
 import { EventStatus } from '@pickup/shared';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import TextField from '@mui/material/TextField';
-import DeleteIcon from '@mui/icons-material/Delete';
 import ConfirmationDialog from '@/components/molecules/ConfirmationDialog';
+
+// New Components
+import EventHeader from '@/components/organisms/EventHeader';
+import RSVPControls from '@/components/molecules/RSVPControls';
+import AttendeeList from '@/components/organisms/AttendeeList';
 
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -55,8 +49,6 @@ const EventDetails: React.FC = () => {
 
   const [positionDialogOpen, setPositionDialogOpen] = React.useState(false);
   const [selectedPositions, setSelectedPositions] = React.useState<string[]>([]);
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const openMenu = Boolean(anchorEl);
 
   // Confirmation Dialog State
   const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
@@ -119,7 +111,6 @@ const EventDetails: React.FC = () => {
       onSuccess: () => {
         enqueueSnackbar('Event canceled', { variant: 'success' });
         setCancelDialogOpen(false);
-        handleMenuClose();
       },
       onError: () => {
         enqueueSnackbar('Failed to cancel event', { variant: 'error' });
@@ -197,13 +188,6 @@ const EventDetails: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldJoin, id, eventData, userId]); // Dependencies simplified
 
-  const handleMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
   // Add Attendee Dialog State
   const [addAttendeeDialogOpen, setAddAttendeeDialogOpen] = React.useState(false);
   const [attendeeEmail, setAttendeeEmail] = React.useState('');
@@ -218,7 +202,6 @@ const EventDetails: React.FC = () => {
     const url = `${window.location.origin}/events/${id}?join=true`;
     navigator.clipboard.writeText(url);
     enqueueSnackbar('Invite link copied to clipboard!', { variant: 'success' });
-    handleMenuClose();
   };
 
   if (isLoading) {
@@ -262,59 +245,14 @@ const EventDetails: React.FC = () => {
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
       {/* Header Section */}
-      <Box mb={4}>
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-          <Box>
-            <Typography variant="h3" component="h1" fontWeight="bold" gutterBottom>
-              {event.title}
-            </Typography>
-            <Box display="flex" gap={1} mb={2}>
-              <Chip
-                label={event.type.replace(/_/g, ' ')}
-                color="secondary"
-                sx={{ fontWeight: 'bold' }}
-              />
-              <Chip
-                label={event.format.replace(/_/g, ' ')}
-                variant="outlined"
-                sx={{ bgcolor: 'background.paper' }}
-              />
-              {event.status === EventStatus.CANCELED && (
-                <Chip label="CANCELED" color="error" sx={{ fontWeight: 'bold' }} />
-              )}
-            </Box>
-          </Box>
-
-          <Box display="flex" gap={1}>
-            <IconButton onClick={handleShare} title="Share">
-              <ShareIcon />
-            </IconButton>
-            {!isAttending && !isOrganizer && event.status !== EventStatus.CANCELED && (
-              <Button variant="contained" size="large" onClick={handleJoinClick}>
-                Join Event
-              </Button>
-            )}
-            {isOrganizer && (
-              <IconButton onClick={handleMenuClick}>
-                <MoreVertIcon />
-              </IconButton>
-            )}
-            <Menu anchorEl={anchorEl} open={openMenu} onClose={handleMenuClose}>
-              <MenuItem onClick={handleShare}>Share Event</MenuItem>
-              {isOrganizer && event.status !== EventStatus.CANCELED && (
-                <MenuItem
-                  onClick={() => {
-                    setCancelDialogOpen(true);
-                  }}
-                  sx={{ color: 'error.main' }}
-                >
-                  Cancel Event
-                </MenuItem>
-              )}
-            </Menu>
-          </Box>
-        </Box>
-      </Box>
+      <EventHeader
+        event={event}
+        isOrganizer={isOrganizer}
+        isAttending={isAttending}
+        onJoinClick={handleJoinClick}
+        onShareClick={handleShare}
+        onCancelEventClick={() => setCancelDialogOpen(true)}
+      />
 
       <Grid container spacing={4}>
         {/* Left Column: Main Content */}
@@ -332,7 +270,6 @@ const EventDetails: React.FC = () => {
               </Typography>
             </CardContent>
           </Card>
-
           {/* Future: Comments Section */}
         </Grid>
 
@@ -392,151 +329,22 @@ const EventDetails: React.FC = () => {
 
             {/* RSVP Actions (If Attending) */}
             {isAttending && (
-              <Card elevation={2} sx={{ bgcolor: 'primary.50' }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom color="primary.main">
-                    Your RSVP
-                  </Typography>
-                  <ButtonGroup
-                    fullWidth
-                    variant="contained"
-                    aria-label="rsvp button group"
-                    size="small"
-                    sx={{ boxShadow: 0 }}
-                  >
-                    <Button
-                      color={currentStatus === AttendeeStatus.YES ? 'success' : 'inherit'}
-                      onClick={() => executeUpdateStatus(AttendeeStatus.YES)}
-                      sx={
-                        currentStatus !== AttendeeStatus.YES
-                          ? { bgcolor: 'white', color: 'text.primary' }
-                          : {}
-                      }
-                    >
-                      Going
-                    </Button>
-                    <Button
-                      color={currentStatus === AttendeeStatus.MAYBE ? 'warning' : 'inherit'}
-                      onClick={() => executeUpdateStatus(AttendeeStatus.MAYBE)}
-                      sx={
-                        currentStatus !== AttendeeStatus.MAYBE
-                          ? { bgcolor: 'white', color: 'text.primary' }
-                          : {}
-                      }
-                    >
-                      Maybe
-                    </Button>
-                    <Button
-                      color={currentStatus === AttendeeStatus.NO ? 'error' : 'inherit'}
-                      onClick={() => executeUpdateStatus(AttendeeStatus.NO)}
-                      sx={
-                        currentStatus !== AttendeeStatus.NO
-                          ? { bgcolor: 'white', color: 'text.primary' }
-                          : {}
-                      }
-                    >
-                      No
-                    </Button>
-                  </ButtonGroup>
-                </CardContent>
-              </Card>
+              <RSVPControls
+                currentStatus={currentStatus}
+                onUpdateStatus={executeUpdateStatus}
+                isLoading={false}
+              />
             )}
 
             {/* Attendees Card */}
-            <Card elevation={0} variant="outlined">
-              <CardContent>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Typography variant="h6">Attendees</Typography>
-                    <Chip label={`${event.attendees.length}`} size="small" />
-                  </Box>
-                  {isOrganizer && event.status !== EventStatus.CANCELED && (
-                    <IconButton
-                      size="small"
-                      onClick={() => setAddAttendeeDialogOpen(true)}
-                      title="Add Attendee"
-                      color="primary"
-                    >
-                      <PersonAddIcon />
-                    </IconButton>
-                  )}
-                </Box>
-
-                {/* List View for Organizer to Manage, Avatar Group for others */}
-                {isOrganizer ? (
-                  <Stack spacing={1} mt={1}>
-                    {event.attendees.map((att, index) => {
-                      const person = att as unknown as {
-                        user: { _id: string; firstName: string; lastName: string; email: string };
-                      };
-                      const name = person.user
-                        ? `${person.user.firstName} ${person.user.lastName || ''}`
-                        : 'Unknown';
-                      return (
-                        <Box
-                          key={index}
-                          display="flex"
-                          justifyContent="space-between"
-                          alignItems="center"
-                          p={1}
-                          bgcolor="background.default"
-                          borderRadius={1}
-                        >
-                          <Box display="flex" alignItems="center" gap={2}>
-                            <Avatar sx={{ width: 32, height: 32, fontSize: '0.8rem' }}>
-                              {person.user?.firstName?.[0]}
-                            </Avatar>
-                            <Box>
-                              <Typography variant="body2" fontWeight="500">
-                                {name}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {person.user?.email}
-                              </Typography>
-                            </Box>
-                          </Box>
-                          {/* Don't remove self */}
-                          {person.user?._id !== organizerId && (
-                            <IconButton
-                              size="small"
-                              onClick={() => handleRemoveAttendee(person.user?._id)}
-                              color="error"
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          )}
-                        </Box>
-                      );
-                    })}
-                  </Stack>
-                ) : (
-                  <AvatarGroup max={7} sx={{ justifyContent: 'flex-start' }}>
-                    {event.attendees.map((att, index) => {
-                      const person = att as unknown as {
-                        user: { firstName: string; lastName: string };
-                      };
-                      const name = person.user
-                        ? `${person.user.firstName} ${person.user.lastName || ''}`
-                        : '?';
-                      return (
-                        <Avatar key={index} alt={name}>
-                          {person.user?.firstName?.[0]}
-                        </Avatar>
-                      );
-                    })}
-                  </AvatarGroup>
-                )}
-
-                <Box mt={2}>
-                  <Typography variant="body2" color="text.secondary">
-                    Organized by{' '}
-                    <strong>
-                      {(event.organizer as unknown as { firstName: string }).firstName}
-                    </strong>
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
+            <AttendeeList
+              attendees={event.attendees}
+              organizer={event.organizer}
+              isOrganizer={isOrganizer}
+              isCanceled={event.status === EventStatus.CANCELED}
+              onAddAttendeeClick={() => setAddAttendeeDialogOpen(true)}
+              onRemoveAttendee={handleRemoveAttendee}
+            />
           </Stack>
         </Grid>
       </Grid>
