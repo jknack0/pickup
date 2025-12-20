@@ -1,7 +1,7 @@
 const { execSync } = require('child_process');
 
 // Ensure we fail if env vars are missing
-const requiredVars = ['PROJECT_ID', 'VITE_GOOGLE_MAPS_API_KEY', 'MONGODB_URI', 'JWT_SECRET', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'];
+const requiredVars = ['PROJECT_ID', 'VITE_GOOGLE_MAPS_API_KEY', 'MONGODB_URI', 'JWT_SECRET', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'CLIENT_URL'];
 const missing = requiredVars.filter(key => !process.env[key]);
 
 if (missing.length > 0) {
@@ -15,6 +15,7 @@ const mongoUri = process.env.MONGODB_URI;
 const jwtSecret = process.env.JWT_SECRET;
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+const clientUrl = process.env.CLIENT_URL;
 
 const run = (cmd) => {
     console.log(`\n> ${cmd}`);
@@ -44,7 +45,7 @@ run(`docker push gcr.io/${projectId}/pickup-app`);
 console.log('🚀 Deploying to Cloud Run...');
 // Note: We use double quotes for the --set-env-vars string to handle the comma-separated list
 // and ensure we escape properly if values have commas (though URIs usually don't need complex escaping here if simple)
-const envVars = `MONGODB_URI=${mongoUri},JWT_SECRET=${jwtSecret},NODE_ENV=production,STRIPE_SECRET_KEY=${stripeSecretKey},STRIPE_WEBHOOK_SECRET=${stripeWebhookSecret}`;
+const envVars = `MONGODB_URI=${mongoUri},JWT_SECRET=${jwtSecret},NODE_ENV=production,STRIPE_SECRET_KEY=${stripeSecretKey},STRIPE_WEBHOOK_SECRET=${stripeWebhookSecret},CLIENT_URL=${clientUrl}`;
 run(`gcloud run deploy pickup-app --image gcr.io/${projectId}/pickup-app --platform managed --region us-central1 --allow-unauthenticated --set-env-vars "${envVars}"`);
 
 console.log('✅ Deployment Complete!');
