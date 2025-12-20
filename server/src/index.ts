@@ -65,7 +65,12 @@ if (process.env.NODE_ENV === 'production') {
 
 console.log('[Startup] Connecting to MongoDB...');
 mongoose
-  .connect(process.env.MONGODB_URI as string)
+  .connect(process.env.MONGODB_URI as string, {
+    serverSelectionTimeoutMS: 30000, // Increase timeout for Cloud Run cold starts
+    socketTimeoutMS: 45000,
+    retryWrites: true,
+    w: 'majority',
+  })
   .then(() => {
     console.log('[Startup] Connected to MongoDB');
     logger.info('Connected to MongoDB');
