@@ -6,7 +6,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Load .env from root directory (../../.env relative to src/index.ts)
+// Load .env from root directory (../../.env relative to src/index.ts)
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
+console.log('[Startup] Starting server...');
+console.log('[Startup] NODE_ENV:', process.env.NODE_ENV);
+console.log('[Startup] PORT:', process.env.PORT);
+console.log('[Startup] MONGODB_URI provided:', !!process.env.MONGODB_URI);
 
 import express, { Request, Response } from 'express';
 import cors from 'cors';
@@ -21,6 +27,8 @@ import { requestLogger } from '@/middleware/requestLogger.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+console.log('[Startup] Port configured:', port);
 
 app.use(
   cors({
@@ -47,6 +55,7 @@ app.use(errorHandler);
 // Serve static files only in production
 if (process.env.NODE_ENV === 'production') {
   const clientBuildPath = path.resolve(__dirname, '../../client/dist');
+  console.log('[Startup] Serving static files from:', clientBuildPath);
   app.use(express.static(clientBuildPath));
 
   app.get('*', (req: Request, res: Response) => {
@@ -54,13 +63,22 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+console.log('[Startup] Connecting to MongoDB...');
 mongoose
   .connect(process.env.MONGODB_URI as string)
-  .then(() => logger.info('Connected to MongoDB'))
-  .catch((err) => logger.error('Failed to connect to MongoDB', err));
+  .then(() => {
+    console.log('[Startup] Connected to MongoDB');
+    logger.info('Connected to MongoDB');
+  })
+  .catch((err) => {
+    console.error('[Startup] Failed to connect to MongoDB', err);
+    logger.error('Failed to connect to MongoDB', err);
+  });
 
-const server = app.listen(port, () => {
-  logger.info(`[server]: Server is running at http://localhost:${port}`);
+console.log('[Startup] About to start listening on port', port);
+const server = app.listen(Number(port), '0.0.0.0', () => {
+  console.log(`[Startup] Server is now listening on http://0.0.0.0:${port}`);
+  logger.info(`[server]: Server is running at http://0.0.0.0:${port}`);
 });
 
 const gracefulShutdown = () => {

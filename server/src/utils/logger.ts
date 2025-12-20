@@ -28,16 +28,20 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 if (process.env.MONGODB_URI) {
-  logger.add(
-    new winston.transports.MongoDB({
-      db: process.env.MONGODB_URI,
-      options: {
-        useUnifiedTopology: true,
-      },
-      collection: 'logs',
-      level: 'info',
-    }),
-  );
+  try {
+    logger.add(
+      new winston.transports.MongoDB({
+        db: process.env.MONGODB_URI,
+        options: {
+          useUnifiedTopology: true,
+        },
+        collection: 'logs',
+        level: 'info',
+      }),
+    );
+  } catch (err) {
+    console.error('Failed to initialize MongoDB logger transport', err);
+  }
 }
 
 export default logger;
