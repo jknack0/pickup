@@ -79,7 +79,7 @@ describe('Auth Controller', () => {
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
         message: 'User registered successfully',
-        user: { id: 'userid', firstName: 'Test', lastName: 'User', email: 'test@test.com' },
+        user: { _id: 'userid', firstName: 'Test', lastName: 'User', email: 'test@test.com' },
       });
     });
 
@@ -105,7 +105,11 @@ describe('Auth Controller', () => {
         email: 'test@test.com',
         comparePassword: jest.fn().mockResolvedValue(true),
       };
-      (User.findOne as jest.Mock).mockResolvedValue(mockUser);
+      // Mock findOne chain: findOne().select() -> resolves to mockUser
+      const mockQuery = {
+        select: jest.fn().mockResolvedValue(mockUser),
+      };
+      (User.findOne as jest.Mock).mockReturnValue(mockQuery);
       (jwt.sign as jest.Mock).mockReturnValue('mocktoken');
 
       await login(req as Request, res as Response, next);
@@ -114,7 +118,7 @@ describe('Auth Controller', () => {
       expect(res.cookie).toHaveBeenCalledWith('token', 'mocktoken', expect.any(Object));
       expect(res.json).toHaveBeenCalledWith({
         message: 'Logged in successfully',
-        user: { id: 'userid', firstName: 'Test', lastName: 'User', email: 'test@test.com' },
+        user: { _id: 'userid', firstName: 'Test', lastName: 'User', email: 'test@test.com' },
       });
     });
 
@@ -123,7 +127,11 @@ describe('Auth Controller', () => {
       const mockUser = {
         comparePassword: jest.fn().mockResolvedValue(false),
       };
-      (User.findOne as jest.Mock).mockResolvedValue(mockUser);
+      // Mock findOne chain
+      const mockQuery = {
+        select: jest.fn().mockResolvedValue(mockUser),
+      };
+      (User.findOne as jest.Mock).mockReturnValue(mockQuery);
 
       await login(req as Request, res as Response, next);
 

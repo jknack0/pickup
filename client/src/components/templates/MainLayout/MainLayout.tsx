@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, type MouseEvent, useState } from 'react';
 import { AppBar } from '@atoms/AppBar';
 import { Toolbar } from '@atoms/Toolbar';
 import { Typography } from '@atoms/Typography';
@@ -11,9 +11,18 @@ import { ListItemButton } from '@atoms/ListItemButton';
 import { ListItemText } from '@atoms/ListItemText';
 
 import { useNavigate } from 'react-router-dom';
-import { useLogout } from '@hooks/useAuth';
+import { useLogout, useUser } from '@hooks/useAuth';
 import { useMyEvents } from '@hooks/useEvents';
-import { Collapse, IconButton, useMediaQuery, useTheme } from '@mui/material';
+import {
+  Collapse,
+  IconButton,
+  useMediaQuery,
+  useTheme,
+  Avatar,
+  Menu,
+  MenuItem,
+  Tooltip,
+} from '@mui/material';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -27,10 +36,12 @@ export interface MainLayoutProps {
 
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const { mutate: logout } = useLogout();
+  const { data: userData } = useUser();
   const navigate = useNavigate();
   const { data: events } = useMyEvents();
   const [eventsOpen, setEventsOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
 
   const theme = useTheme();
   // We can use this if we want conditional rendering logic in JS,
@@ -39,6 +50,24 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleOpenUserMenu = (event: MouseEvent<HTMLElement>) => {
+    setAnchorElUser(event.currentTarget);
+  };
+
+  const handleCloseUserMenu = () => {
+    setAnchorElUser(null);
+  };
+
+  const handleNavigateProfile = () => {
+    navigate('/profile');
+    handleCloseUserMenu();
+  };
+
+  const handleLogout = () => {
+    logout(undefined, { onSuccess: () => navigate('/') });
+    handleCloseUserMenu();
   };
 
   const filteredEvents = events?.filter((event) => event.status !== EventStatus.CANCELED);
@@ -98,6 +127,11 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     </Box>
   );
 
+  const userInitials =
+    userData?.user?.firstName && userData?.user?.lastName
+      ? `${userData.user.firstName[0]}${userData.user.lastName[0]}`.toUpperCase()
+      : 'U';
+
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
       <AppBar
@@ -128,14 +162,56 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               sx={{
                 fontWeight: 700,
                 color: 'background.default',
-                // Mobile Center
-                position: { xs: 'absolute', md: 'static' },
-                left: { xs: '50%', md: 'auto' },
-                transform: { xs: 'translateX(-50%)', md: 'none' },
+                display: 'flex',
+                alignItems: 'center',
+                flexGrow: 1,
+                // On mobile, center title if drawer icon is present?
+                // Using flexGrow 1 pushes the avatar to the end.
               }}
             >
               Pickup
             </Typography>
+
+            <Box sx={{ flexGrow: 0 }}>
+              <Tooltip title="Open settings">
+                <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                  <Avatar
+                    sx={{
+                      bgcolor: 'secondary.main',
+                      color: 'secondary.contrastText',
+                      width: 32,
+                      height: 32,
+                      fontSize: 14,
+                    }}
+                  >
+                    {userInitials}
+                  </Avatar>
+                </IconButton>
+              </Tooltip>
+              <Menu
+                sx={{ mt: '45px' }}
+                id="menu-appbar"
+                anchorEl={anchorElUser}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                open={Boolean(anchorElUser)}
+                onClose={handleCloseUserMenu}
+              >
+                <MenuItem onClick={handleNavigateProfile}>
+                  <Typography textAlign="center">Profile</Typography>
+                </MenuItem>
+                <MenuItem onClick={handleLogout}>
+                  <Typography textAlign="center">Sign Out</Typography>
+                </MenuItem>
+              </Menu>
+            </Box>
           </Toolbar>
         </Container>
       </AppBar>

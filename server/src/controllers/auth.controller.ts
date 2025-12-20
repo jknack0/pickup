@@ -18,7 +18,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Create user
-  const user = new User({ email, password, firstName, lastName, dateOfBirth });
+  const user = new User({ email, passwordHash: password, firstName, lastName, dateOfBirth });
   await user.save();
 
   const token = generateToken(user._id.toString());
@@ -32,14 +32,14 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 
   res.status(201).json({
     message: 'User registered successfully',
-    user: { id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName },
+    user: { _id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName },
   });
 });
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body as LoginInput;
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email }).select('+passwordHash');
   if (!user) {
     throw new AppError('Invalid email or password', 401);
   }
@@ -60,7 +60,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
   res.json({
     message: 'Logged in successfully',
-    user: { id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName },
+    user: { _id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName },
   });
 });
 

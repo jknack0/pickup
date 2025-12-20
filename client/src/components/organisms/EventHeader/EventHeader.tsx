@@ -1,6 +1,5 @@
 import React from 'react';
 import { Box, Typography, Chip, IconButton, Button, Menu, MenuItem } from '@mui/material';
-import ShareIcon from '@mui/icons-material/Share';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { EventStatus, type IEvent } from '@pickup/shared';
 
@@ -12,6 +11,7 @@ interface EventHeaderProps {
   onShareClick: () => void;
   onCancelEventClick: () => void;
   price?: number;
+  JoinButtonComponent?: React.ReactNode;
 }
 
 const EventHeader: React.FC<EventHeaderProps> = ({
@@ -22,6 +22,7 @@ const EventHeader: React.FC<EventHeaderProps> = ({
   onShareClick,
   onCancelEventClick,
   price,
+  JoinButtonComponent,
 }) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const openMenu = Boolean(anchorEl);
@@ -69,19 +70,19 @@ const EventHeader: React.FC<EventHeaderProps> = ({
         </Box>
 
         <Box display="flex" gap={1}>
-          <IconButton onClick={onShareClick} title="Share">
-            <ShareIcon />
+          {!isAttending &&
+            !isOrganizer &&
+            event.status !== EventStatus.CANCELED &&
+            (JoinButtonComponent ? (
+              JoinButtonComponent
+            ) : (
+              <Button variant="contained" size="large" onClick={onJoinClick}>
+                {price && price > 0 ? `Pay & Join ($${(price / 100).toFixed(2)})` : 'Join Event'}
+              </Button>
+            ))}
+          <IconButton onClick={handleMenuClick}>
+            <MoreVertIcon />
           </IconButton>
-          {!isAttending && !isOrganizer && event.status !== EventStatus.CANCELED && (
-            <Button variant="contained" size="large" onClick={onJoinClick}>
-              {price && price > 0 ? `Pay & Join ($${(price / 100).toFixed(2)})` : 'Join Event'}
-            </Button>
-          )}
-          {isOrganizer && (
-            <IconButton onClick={handleMenuClick}>
-              <MoreVertIcon />
-            </IconButton>
-          )}
           <Menu anchorEl={anchorEl} open={openMenu} onClose={handleMenuClose}>
             <MenuItem onClick={handleShare}>Share Event</MenuItem>
             {isOrganizer && event.status !== EventStatus.CANCELED && (

@@ -4,7 +4,7 @@ import { MainLayout } from './MainLayout';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 import { useNavigate } from 'react-router-dom';
-import { useLogout } from '@hooks/useAuth';
+import { useLogout, useUser } from '@hooks/useAuth';
 import { useMyEvents } from '@hooks/useEvents';
 
 // Mock dependencies
@@ -35,6 +35,14 @@ describe('MainLayout', () => {
       mutate: mockLogoutMutate,
     });
     (useMyEvents as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ data: [] });
+    (useUser as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: {
+        user: {
+          firstName: 'Test',
+          lastName: 'User',
+        },
+      },
+    });
   });
 
   it('renders children correctly', () => {

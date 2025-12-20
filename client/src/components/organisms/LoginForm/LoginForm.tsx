@@ -35,21 +35,6 @@ export const LoginForm = () => {
     resolver: zodResolver(loginSchema),
     mode: 'onBlur',
   });
-  // ... existing code ...
-  <Box sx={{ mt: 2, textAlign: 'center' }}>
-    <Typography variant="body2" color="text.secondary">
-      Don't have an account?{' '}
-      <Link
-        component={RouterLink}
-        to="/signup"
-        state={location.state}
-        underline="hover"
-        sx={{ fontWeight: 600 }}
-      >
-        Sign Up
-      </Link>
-    </Typography>
-  </Box>;
 
   const onSubmit = (data: LoginInput) => {
     login(data, {
@@ -117,7 +102,13 @@ export const LoginForm = () => {
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Typography variant="body2" color="text.secondary">
             Don't have an account?{' '}
-            <Link component={RouterLink} to="/signup" underline="hover" sx={{ fontWeight: 600 }}>
+            <Link
+              component={RouterLink}
+              to="/signup"
+              state={location.state}
+              underline="hover"
+              sx={{ fontWeight: 600 }}
+            >
               Sign Up
             </Link>
           </Typography>

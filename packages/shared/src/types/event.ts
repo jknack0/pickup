@@ -78,6 +78,17 @@ export const CreateEventSchema = z.object({
     isPaid: z.boolean().default(false),
     type: z.nativeEnum(EventType),
     format: z.nativeEnum(EventFormat),
-});
+}).refine(
+    (data) => {
+        if (data.isPaid) {
+            return (data.price || 0) > 0;
+        }
+        return true;
+    },
+    {
+        message: 'Price must be greater than 0 for paid events',
+        path: ['price'],
+    },
+);
 
 export type CreateEventInput = z.infer<typeof CreateEventSchema>;

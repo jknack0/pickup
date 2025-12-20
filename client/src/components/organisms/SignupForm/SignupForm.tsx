@@ -23,21 +23,6 @@ export const SignupForm = () => {
     resolver: zodResolver(registerSchema),
     mode: 'onBlur',
   });
-  // ... existing code ...
-  <Box sx={{ mt: 2, textAlign: 'center' }}>
-    <Typography variant="body2" color="text.secondary">
-      Already have an account?{' '}
-      <Link
-        component={RouterLink}
-        to="/login"
-        state={location.state}
-        underline="hover"
-        sx={{ fontWeight: 600 }}
-      >
-        Log In
-      </Link>
-    </Typography>
-  </Box>;
 
   const onSubmit = (data: RegisterInput) => {
     registerUser(data, {
@@ -112,7 +97,13 @@ export const SignupForm = () => {
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Typography variant="body2" color="text.secondary">
             Already have an account?{' '}
-            <Link component={RouterLink} to="/login" underline="hover" sx={{ fontWeight: 600 }}>
+            <Link
+              component={RouterLink}
+              to="/login"
+              state={location.state}
+              underline="hover"
+              sx={{ fontWeight: 600 }}
+            >
               Log In
             </Link>
           </Typography>

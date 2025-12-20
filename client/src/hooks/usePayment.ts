@@ -30,3 +30,14 @@ export const useCreateCheckout = () => {
     },
   });
 };
+
+export const useVerifyPayment = () => {
+  return useMutation({
+    mutationFn: async (sessionId: string) => {
+      const response = await import('@/api/payment').then((mod) =>
+        mod.verifyPayment(sessionId).then((r) => r.data),
+      );
+      return response;
+    },
+  });
+};

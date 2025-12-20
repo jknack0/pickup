@@ -82,6 +82,42 @@ describe('Event Controller', () => {
       expect(statusMock).toHaveBeenCalledWith(201);
     });
 
+    it('should create a paid event successfully', async () => {
+      mockRequest.body = {
+        title: 'Paid Match',
+        date: '2025-01-01',
+        location: 'Gym',
+        coordinates: { lat: 10, lng: 20 },
+        description: 'Competitive',
+        isPaid: true,
+        price: 1500, // $15.00
+        currency: 'usd',
+      };
+
+      const mockSave = jest.fn();
+      const mockPopulate = jest.fn();
+
+      (Event as any).mockImplementation(() => ({
+        save: mockSave,
+        populate: mockPopulate,
+        toJSON: () => mockRequest.body,
+      }));
+
+      await eventController.createEvent(
+        mockRequest as unknown as Request,
+        mockResponse as unknown as Response,
+        mockNext,
+      );
+
+      expect(Event).toHaveBeenCalledWith({
+        ...mockRequest.body,
+        organizer: 'user123',
+        attendees: [{ user: 'user123', status: 'YES', positions: [] }],
+      });
+      expect(mockSave).toHaveBeenCalled();
+      expect(statusMock).toHaveBeenCalledWith(201);
+    });
+
     it('should return 401 if user is not authenticated', async () => {
       mockRequest.user = undefined;
       await eventController.createEvent(

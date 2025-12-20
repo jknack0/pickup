@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   TextField,
@@ -22,6 +22,8 @@ const CreateEventForm: React.FC = () => {
     register,
     handleSubmit,
     setValue,
+    control,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<CreateEventInput>({
     resolver: zodResolver(CreateEventSchema),
@@ -47,6 +49,7 @@ const CreateEventForm: React.FC = () => {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { mutateAsync: createEvent } = useCreateEvent();
+  const isPaid = watch('isPaid');
 
   const onSubmit = async (data: CreateEventInput) => {
     try {
@@ -180,38 +183,32 @@ const CreateEventForm: React.FC = () => {
           or just render it and handle validation. 
           Let's assume the user can set a price if isPaid is checked.
        */}
-      <TextField
-        margin="normal"
-        fullWidth
-        id="price"
-        label="Price (USD)"
-        type="number"
-        InputProps={{
-          startAdornment: <InputAdornment position="start">$</InputAdornment>,
-        }}
-        disabled={!register('isPaid').name} // Dirty hack? No.
-        // Better to use watch. But for now let's just let them edit it.
-        // Actually, let's fix this properly with watch in next step if needed.
-        // For now, render it always or just let it handle itself.
-        // Shared schema expects price in CENTS if I recall?
-        // Wait, backend model says 'price: Number'.
-        // Shared schema: `price: z.number().min(0).optional().default(0)`
-        // Usually frontend inputs are dollars, backend stores cents.
-        // Let's assume input is CENTS for simplicity now, or DOLLARS?
-        // Backend `createCheckoutSession` does `unit_amount: event.price`.
-        // So event.price MUST be in CENTS.
-        // Frontend input should probably be Dollars and converted?
-        // The schema validation runs on the input.
-        // If schema says number, it expects number.
-        // Let's stick to simple number input for now. User enters 1000 for $10.00?
-        // Or user enters 10 and we convert?
-        // "price: z.number()"
-        // Let's assume input is CENTS for now to match backend 1:1 without extra transform layer yet.
-        // I'll add a helper text.
-
-        error={!!errors.price}
-        helperText={errors.price?.message || 'Price in CENTS (e.g. 1000 = $10.00)'}
-        {...register('price', { valueAsNumber: true })}
+      <Controller
+        name="price"
+        control={control}
+        render={({ field: { onChange, value }, fieldState: { error } }) => (
+          <TextField
+            margin="normal"
+            fullWidth
+            id="price"
+            label="Price (USD)"
+            placeholder="0.00"
+            disabled={!isPaid}
+            error={!!error}
+            helperText={error?.message}
+            InputProps={{
+              startAdornment: <InputAdornment position="start">$</InputAdornment>,
+            }}
+            inputProps={{
+              inputMode: 'numeric',
+            }}
+            value={value ? (value / 100).toFixed(2) : ''}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/\D/g, '');
+              onChange(Number(digits));
+            }}
+          />
+        )}
       />
 
       <Button

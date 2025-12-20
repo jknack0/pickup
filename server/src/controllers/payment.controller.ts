@@ -37,11 +37,12 @@ export const onboardOrganizer = async (req: Request, res: Response) => {
       await user.save();
     }
 
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     // Create Account Link
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
-      refresh_url: `${process.env.CLIENT_URL}/profile?stripe_refresh=true`,
-      return_url: `${process.env.CLIENT_URL}/profile?stripe_return=true`,
+      refresh_url: `${clientUrl}/profile?stripe_refresh=true`,
+      return_url: `${clientUrl}/profile?stripe_return=true`,
       type: 'account_onboarding',
     });
 
@@ -217,7 +218,72 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
   res.json({ received: true });
 };
 
-// 5. Process Refund (Internal)
+// 5. Verify Payment (Fallback for frontend)
+export const verifyPayment = async (req: Request, res: Response) => {
+  try {
+    const { sessionId } = req.body;
+    const userId = (req as AuthRequest).user?.id;
+
+    if (!userId || !sessionId) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    if (session.payment_status !== 'paid') {
+      return res.status(400).json({ message: 'Payment not completed' });
+    }
+
+    if (session.metadata?.type !== 'EVENT_JOIN') {
+      return res.status(400).json({ message: 'Invalid session type' });
+    }
+
+    const { eventId, positions } = session.metadata;
+
+    // Add user to event (Reuse logic or copy safely)
+    const EventModel = (await import('../models/Event.js')).default;
+    const eventDoc = await EventModel.findById(eventId);
+    const TransactionModel = (await import('../models/Transaction.js')).default;
+
+    if (!eventDoc) return res.status(404).json({ message: 'Event not found' });
+
+    // Check if already joined
+    const attending = eventDoc.attendees.some((a) => a.user.toString() === userId);
+    if (!attending) {
+      const newAttendee = {
+        user: userId,
+        status: 'YES',
+        positions: positions ? JSON.parse(positions) : [],
+        joinedAt: new Date(),
+      };
+      eventDoc.attendees.push(newAttendee as unknown as IAttendee);
+      await eventDoc.save();
+    }
+
+    // Record Transaction (Idempotent check)
+    const existingTransaction = await TransactionModel.findOne({
+      stripePaymentIntentId: session.payment_intent as string,
+    });
+
+    if (!existingTransaction) {
+      await TransactionModel.create({
+        userId,
+        eventId,
+        stripePaymentIntentId: session.payment_intent as string,
+        amount: session.amount_total || 0,
+        type: 'PAYMENT',
+        status: 'SUCCEEDED',
+      });
+    }
+
+    res.json({ message: 'Payment verified and verified', verified: true });
+  } catch (error) {
+    logger.error('Error verifying payment:', error);
+    res.status(500).json({ message: 'Failed to verify payment' });
+  }
+};
+
+// 6. Process Refund (Internal)
 export const processRefund = async (userId: string, eventId: string) => {
   const TransactionModel = (await import('../models/Transaction.js')).default;
   const EventModel = (await import('../models/Event.js')).default;

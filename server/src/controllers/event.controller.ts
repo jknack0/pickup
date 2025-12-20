@@ -16,7 +16,7 @@ const isOrganizer = (event: IEventDocument, userId: string) =>
   event.organizer.toString() === userId;
 
 export const createEvent = asyncHandler(async (req: Request, res: Response) => {
-  const { title, description, date, location, type, format, coordinates } =
+  const { title, description, date, location, type, format, coordinates, isPaid, price, currency } =
     req.body as CreateEventInput;
   const userId = (req as AuthRequest).user?.id;
 
@@ -32,6 +32,9 @@ export const createEvent = asyncHandler(async (req: Request, res: Response) => {
     coordinates,
     type,
     format,
+    isPaid,
+    price,
+    currency,
     organizer: userId,
     attendees: [{ user: userId, status: AttendeeStatus.YES, positions: [] }], // Organizer is automatically an attendee
   });
