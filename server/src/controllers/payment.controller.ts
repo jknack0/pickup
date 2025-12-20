@@ -28,6 +28,7 @@ export const onboardOrganizer = async (req: Request, res: Response) => {
       const account = await stripe.accounts.create({
         type: 'standard',
         email: user.email,
+        business_type: 'individual',
         business_profile: {
           name: `${user.firstName} ${user.lastName}`,
         },

@@ -178,4 +178,74 @@ describe('Payment Controller', () => {
       expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ verified: true }));
     });
   });
+
+  describe('createCheckoutSession', () => {
+    it('should create session with destination charge', async () => {
+      mockRequest.body = { eventId: 'event123', positions: ['Setter'] };
+
+      const mockEvent = {
+        _id: 'event123',
+        price: 1000,
+        isPaid: true,
+        currency: 'usd',
+        title: 'Volleyball Game',
+        description: 'Fun game',
+        organizer: {
+          _id: 'org123',
+          stripeAccountId: 'acct_123',
+          stripeOnboardingComplete: true,
+        },
+      };
+
+      (EventModel.findById as jest.Mock).mockReturnValue({
+        populate: jest.fn().mockResolvedValue(mockEvent),
+      });
+
+      (stripe.checkout.sessions.create as jest.Mock).mockResolvedValue({
+        id: 'cs_test_123',
+        url: 'http://stripe.com/checkout',
+      });
+
+      await paymentController.createCheckoutSession(
+        mockRequest as unknown as Request,
+        mockResponse as unknown as Response,
+      );
+
+      expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          payment_intent_data: expect.objectContaining({
+            transfer_data: { destination: 'acct_123' },
+            application_fee_amount: 50, // 5% of 1000
+          }),
+        }),
+      );
+
+      expect(jsonMock).toHaveBeenCalledWith({
+        sessionId: 'cs_test_123',
+        url: 'http://stripe.com/checkout',
+      });
+    });
+
+    it('should fail if organizer not onboarded', async () => {
+      mockRequest.body = { eventId: 'event123' };
+      const mockEvent = {
+        isPaid: true,
+        price: 1000,
+        organizer: { stripeAccountId: null },
+      };
+      (EventModel.findById as jest.Mock).mockReturnValue({
+        populate: jest.fn().mockResolvedValue(mockEvent),
+      });
+
+      await paymentController.createCheckoutSession(
+        mockRequest as unknown as Request,
+        mockResponse as unknown as Response,
+      );
+
+      expect(statusMock).toHaveBeenCalledWith(400);
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Organizer cannot accept payments yet' }),
+      );
+    });
+  });
 });
