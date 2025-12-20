@@ -73,8 +73,8 @@ export const CreateEventSchema = z.object({
             lng: z.number(),
         })
         .optional(),
-    price: z.number().min(0).optional().default(0),
-    currency: z.string().optional().default('usd'),
+    price: z.number().min(0).default(0),
+    currency: z.string().default('usd'),
     isPaid: z.boolean().default(false),
     type: z.nativeEnum(EventType),
     format: z.nativeEnum(EventFormat),

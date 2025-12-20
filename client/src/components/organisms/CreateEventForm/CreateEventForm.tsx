@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, type SubmitHandler, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   TextField,
@@ -26,7 +26,7 @@ const CreateEventForm: React.FC = () => {
     watch,
     formState: { errors, isSubmitting },
   } = useForm<CreateEventInput>({
-    resolver: zodResolver(CreateEventSchema),
+    resolver: zodResolver(CreateEventSchema) as Resolver<CreateEventInput>,
     mode: 'onBlur',
     defaultValues: {
       type: EventType.VOLLEYBALL,
@@ -38,6 +38,7 @@ const CreateEventForm: React.FC = () => {
       isPaid: false,
       price: 0,
       currency: 'usd',
+      coordinates: undefined,
     },
   });
 
@@ -51,7 +52,7 @@ const CreateEventForm: React.FC = () => {
   const { mutateAsync: createEvent } = useCreateEvent();
   const isPaid = watch('isPaid');
 
-  const onSubmit = async (data: CreateEventInput) => {
+  const onSubmit: SubmitHandler<CreateEventInput> = async (data) => {
     try {
       const response = await createEvent(data);
       enqueueSnackbar('Event created successfully', { variant: 'success' });

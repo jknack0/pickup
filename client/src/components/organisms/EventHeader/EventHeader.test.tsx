@@ -16,8 +16,10 @@ describe('EventHeader', () => {
     organizer: 'org1',
     attendees: [],
     description: 'Fun game',
-    minAttendees: 6,
-    maxAttendees: 12,
+
+    isPaid: false,
+    price: 0,
+    currency: 'usd',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
