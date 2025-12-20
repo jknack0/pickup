@@ -11,6 +11,7 @@ interface EventHeaderProps {
   onJoinClick: () => void;
   onShareClick: () => void;
   onCancelEventClick: () => void;
+  price?: number;
 }
 
 const EventHeader: React.FC<EventHeaderProps> = ({
@@ -20,6 +21,7 @@ const EventHeader: React.FC<EventHeaderProps> = ({
   onJoinClick,
   onShareClick,
   onCancelEventClick,
+  price,
 }) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const openMenu = Boolean(anchorEl);
@@ -72,7 +74,7 @@ const EventHeader: React.FC<EventHeaderProps> = ({
           </IconButton>
           {!isAttending && !isOrganizer && event.status !== EventStatus.CANCELED && (
             <Button variant="contained" size="large" onClick={onJoinClick}>
-              Join Event
+              {price && price > 0 ? `Pay & Join ($${(price / 100).toFixed(2)})` : 'Join Event'}
             </Button>
           )}
           {isOrganizer && (

@@ -6,6 +6,7 @@ import {
   joinEvent,
   updateRSVP,
   cancelEvent,
+  leaveEvent,
   removeAttendee,
   addAttendee,
 } from '@/api/client';
@@ -133,6 +134,24 @@ export const useAddAttendee = (eventId: string) => {
       } else {
         queryClient.invalidateQueries({ queryKey: ['event', eventId] });
       }
+    },
+  });
+};
+
+export const useLeaveEvent = (eventId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => leaveEvent(eventId),
+    onSuccess: (responseData) => {
+      if (responseData.data && responseData.data.event) {
+        queryClient.setQueryData(['event', eventId], (old: AnyData) => ({
+          ...old,
+          data: { ...old.data, event: responseData.data.event },
+        }));
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['events', 'mine'] });
     },
   });
 };

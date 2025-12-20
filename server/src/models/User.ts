@@ -7,6 +7,8 @@ export interface IUser extends Omit<RegisterInput, 'dateOfBirth' | 'confirmPassw
   dateOfBirth: Date;
   createdAt: Date;
   updatedAt: Date;
+  stripeAccountId?: string;
+  stripeOnboardingComplete?: boolean;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -17,6 +19,8 @@ const UserSchema: Schema = new Schema(
     email: { type: String, required: true, unique: true },
     passwordHash: { type: String, required: true, select: false },
     dateOfBirth: { type: Date, required: true },
+    stripeAccountId: { type: String, sparse: true, unique: true },
+    stripeOnboardingComplete: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

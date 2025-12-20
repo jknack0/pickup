@@ -33,7 +33,9 @@ import {
   useCancelEvent,
   useRemoveAttendee,
   useAddAttendee,
+  useLeaveEvent,
 } from '@/hooks/useEvents';
+import { useCreateCheckout } from '@/hooks/usePayment';
 import { EventStatus } from '@pickup/shared';
 import TextField from '@mui/material/TextField';
 import ConfirmationDialog from '@/components/molecules/ConfirmationDialog';
@@ -95,7 +97,32 @@ const EventDetails: React.FC = () => {
     });
   };
 
+  const { mutate: leave } = useLeaveEvent(id as string);
+
   const executeUpdateStatus = (status: AttendeeStatus) => {
+    if (status === AttendeeStatus.NO && eventData?.isPaid) {
+      // Trigger generic confirm or custom refund dialog
+      if (
+        window.confirm(
+          'Leaving this paid event will verify your refund eligibility (24h policy). Continue?',
+        )
+      ) {
+        leave(undefined, {
+          onSuccess: () => {
+            enqueueSnackbar('Left event. processing refund if applicable.', { variant: 'success' });
+            navigate('/events');
+          },
+          onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } } };
+            enqueueSnackbar(error.response?.data?.message || 'Failed to leave event', {
+              variant: 'error',
+            });
+          },
+        });
+      }
+      return;
+    }
+
     updateStatus(status, {
       onSuccess: () => {
         enqueueSnackbar('RSVP updated', { variant: 'success' });
@@ -144,10 +171,20 @@ const EventDetails: React.FC = () => {
   };
 
   const handleJoinClick = () => {
+    // If it's volleyball, always show dialog (which then checks isPaid on confirm)
     if (eventData?.type === 'VOLLEYBALL') {
       setPositionDialogOpen(true);
     } else {
-      executeJoin(undefined);
+      // If NOT volleyball, but IS paid, we still need to pay.
+      if (eventData?.isPaid) {
+        // Trigger payment directly since no positions needed?
+        // Or reuse handleConfirmJoin logic?
+        // Let's call a unified function or setting state.
+        // For simplicity, reusing handleConfirmJoin logic but with empty positions.
+        handleConfirmJoin();
+      } else {
+        executeJoin(undefined);
+      }
     }
   };
 
@@ -157,8 +194,26 @@ const EventDetails: React.FC = () => {
     );
   };
 
-  const handleConfirmJoin = () => {
-    executeJoin(selectedPositions);
+  const { mutateAsync: createCheckout } = useCreateCheckout();
+
+  const handleConfirmJoin = async () => {
+    if (eventData?.isPaid) {
+      try {
+        const { url } = await createCheckout({
+          eventId: id as string,
+          positions: selectedPositions,
+        });
+        if (url) {
+          window.location.href = url;
+        } else {
+          enqueueSnackbar('Failed to initiate payment', { variant: 'error' });
+        }
+      } catch {
+        enqueueSnackbar('Payment error occurred', { variant: 'error' });
+      }
+    } else {
+      executeJoin(selectedPositions);
+    }
   };
 
   // Attempt join if param exists and we have data
@@ -252,6 +307,7 @@ const EventDetails: React.FC = () => {
         onJoinClick={handleJoinClick}
         onShareClick={handleShare}
         onCancelEventClick={() => setCancelDialogOpen(true)}
+        price={event.isPaid ? event.price : undefined}
       />
 
       <Grid container spacing={4}>

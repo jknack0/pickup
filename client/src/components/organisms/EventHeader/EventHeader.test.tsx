@@ -1,15 +1,15 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import EventHeader from './EventHeader';
-import { EventStatus, type IEvent } from '@pickup/shared';
+import { EventStatus, EventType, EventFormat, type IEvent } from '@pickup/shared';
 
 describe('EventHeader', () => {
   const mockEvent: IEvent = {
     _id: '1',
     title: 'Volleyball Match',
-    type: 'VOLLEYBALL',
-    format: 'OPEN_GYM',
-    status: EventStatus.SCHEDULED,
+    type: EventType.VOLLEYBALL,
+    format: EventFormat.OPEN_GYM,
+    status: EventStatus.ACTIVE,
     date: new Date().toISOString(),
     location: 'Gym',
     coordinates: { lat: 37.7749, lng: -122.4194 },

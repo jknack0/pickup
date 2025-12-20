@@ -48,6 +48,9 @@ export interface IEvent {
         lat: number;
         lng: number;
     };
+    price?: number; // in cents
+    currency?: string;
+    isPaid: boolean;
     organizer: string; // User ID
     attendees: IAttendee[];
     type: EventType;
@@ -70,6 +73,9 @@ export const CreateEventSchema = z.object({
             lng: z.number(),
         })
         .optional(),
+    price: z.number().min(0).optional().default(0),
+    currency: z.string().optional().default('usd'),
+    isPaid: z.boolean().default(false),
     type: z.nativeEnum(EventType),
     format: z.nativeEnum(EventFormat),
 });

@@ -28,10 +28,10 @@ const EventSchema: Schema = new Schema(
     description: { type: String },
     date: { type: Date, required: true },
     location: { type: String, required: true },
-    coordinates: {
-      lat: { type: Number },
-      lng: { type: Number },
-    },
+    lng: { type: Number },
+    price: { type: Number, default: 0 }, // in cents
+    currency: { type: String, default: 'usd' },
+    isPaid: { type: Boolean, default: false },
     organizer: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     attendees: [AttendeeSchema],
     type: {

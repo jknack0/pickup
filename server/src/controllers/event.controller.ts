@@ -4,6 +4,7 @@ import User from '@/models/User.js';
 import { CreateEventInput, AttendeeStatus, EventStatus } from '@pickup/shared';
 import { asyncHandler } from '@/utils/asyncHandler.js';
 import { AppError } from '@/middleware/error.middleware.js';
+import { processRefund } from '@/controllers/payment.controller.js';
 
 interface AuthRequest extends Request {
   user?: {
@@ -91,6 +92,11 @@ export const joinEvent = asyncHandler(async (req: Request, res: Response) => {
   // Check if user is already attending
   if (event.attendees.some((att) => att.user.toString() === userId)) {
     throw new AppError('You have already joined this event', 400);
+  }
+
+  // Block direct join for paid events
+  if (event.isPaid) {
+    throw new AppError('This event requires payment. Please use the checkout flow.', 402);
   }
 
   event.attendees.push({
@@ -228,4 +234,58 @@ export const addAttendee = asyncHandler(async (req: Request, res: Response) => {
   await event.populate('organizer', 'firstName lastName email');
 
   res.json({ message: 'Attendee added', event });
+});
+// ... (previous content)
+// ... (previous content)
+
+export const leaveEvent = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const userId = (req as AuthRequest).user?.id;
+
+  if (!userId) {
+    throw new AppError('Unauthorized', 401);
+  }
+
+  const event = await Event.findById(id);
+  if (!event) {
+    throw new AppError('Event not found', 404);
+  }
+
+  const attendee = event.attendees.find((att) => att.user.toString() === userId);
+  if (!attendee) {
+    throw new AppError('You are not attending this event', 400);
+  }
+
+  // Handle Payment Refund if applicable
+  if (event.isPaid) {
+    try {
+      await processRefund(userId, id);
+    } catch (err) {
+      // Check if it's the "Too late" error, if so, we might still allow leaving but without refund?
+      // User specs: "a user that has paid is able to leave an event up to 24 hours before the event with no penalty, when a user leaves the event before then they are refunded"
+      // Implies if < 24h, they can leave but NO REFUND? Or they CANNOT leave?
+      // "a user... is able to leave... up to 24 hours... with no penalty"
+      // Usually implies after that there IS a penalty (no refund).
+      // So if processRefund throws "Too late", we catch it and proceed to remove attendee (no refund).
+      // If it throws other errors (stripe error), maybe block?
+      const msg = (err as Error).message;
+      if (msg.includes('Too late')) {
+        // Proceed without refund
+      } else if (msg.includes('Refund amount is zero')) {
+        // Proceed without refund
+      } else {
+        // Real error
+        throw err;
+      }
+    }
+  }
+
+  // Remove attendee
+  event.attendees = event.attendees.filter((att) => att.user.toString() !== userId);
+  await event.save();
+
+  // Re-populate
+  await event.populate('attendees.user', 'firstName lastName email');
+
+  res.json({ message: 'Left event successfully', event });
 });

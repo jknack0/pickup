@@ -26,6 +26,7 @@ export const joinEvent = (id: string, positions?: string[]) =>
 export const updateRSVP = (id: string, status: string) =>
   api.patch(`/events/${id}/rsvp`, { status });
 export const cancelEvent = (id: string) => api.put(`/events/${id}/cancel`);
+export const leaveEvent = (id: string) => api.post(`/events/${id}/leave`);
 export const removeAttendee = (eventId: string, userId: string) =>
   api.delete(`/events/${eventId}/attendees/${userId}`);
 export const addAttendee = (eventId: string, email: string) =>

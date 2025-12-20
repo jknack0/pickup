@@ -15,6 +15,7 @@ import mongoose from 'mongoose';
 import logger from '@/utils/logger.js';
 import authRoutes from '@/routes/auth.routes.js';
 import eventRoutes from '@/routes/event.routes.js';
+import paymentRoutes from '@/routes/payment.routes.js';
 
 import { requestLogger } from '@/middleware/requestLogger.js';
 
@@ -27,12 +28,18 @@ app.use(
     credentials: true, // Allow cookies
   }),
 );
+
+// Stripe Webhook (Must be before express.json() to get raw body)
+import { handleStripeWebhook } from '@/controllers/payment.controller.js';
+app.post('/api/webhook', express.raw({ type: 'application/json' }), handleStripeWebhook);
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(requestLogger);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/payments', paymentRoutes);
 
 import { errorHandler } from '@/middleware/error.middleware.js';
 app.use(errorHandler);
