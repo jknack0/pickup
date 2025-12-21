@@ -28,7 +28,10 @@ const EventSchema: Schema = new Schema(
     description: { type: String },
     date: { type: Date, required: true },
     location: { type: String, required: true },
-    lng: { type: Number },
+    coordinates: {
+      lat: { type: Number },
+      lng: { type: Number },
+    },
     price: { type: Number, default: 0 }, // in cents
     currency: { type: String, default: 'usd' },
     isPaid: { type: Boolean, default: false },

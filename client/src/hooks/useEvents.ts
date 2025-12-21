@@ -53,23 +53,9 @@ export const useJoinEvent = (eventId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (positions: string[]) => joinEvent(eventId, positions),
-    onSuccess: (responseData) => {
-      // Optimistic update or refetch
-      // Here we just update the specific event in cache if returned, or invalidate
-      if (responseData.data && responseData.data.event) {
-        queryClient.setQueryData(['event', eventId], (old: AnyData) => {
-          if (!old) return old;
-          // If the API returns the full event structure in a consistent way:
-          // The controller returns { message, data: { event } } usually?
-          // Checking controller: joinEvent returns { message, event }?
-          // Let's rely on invalidation or the passed data if we trust it.
-          // Controller joinEvent returns: res.json({ message: 'Joined...', event })
-          // So responseData.data.event exists.
-          return { ...old, data: { ...old.data, event: responseData.data.event } };
-        });
-      } else {
-        queryClient.invalidateQueries({ queryKey: ['event', eventId] });
-      }
+    onSuccess: () => {
+      // Always invalidate to ensure fresh data from server
+      queryClient.invalidateQueries({ queryKey: ['event', eventId] });
       queryClient.invalidateQueries({ queryKey: ['events', 'mine'] });
     },
   });
