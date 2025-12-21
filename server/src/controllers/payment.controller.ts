@@ -284,8 +284,20 @@ export const verifyPayment = async (req: Request, res: Response) => {
   }
 };
 
+// Refund result type for consumer use
+export interface RefundResult {
+  refunded: true;
+  amount: number; // In cents
+  currency: string;
+  stripeRefundId: string;
+}
+
 // 6. Process Refund (Internal)
-export const processRefund = async (userId: string, eventId: string) => {
+// Returns RefundResult if refund processed, null if no payment to refund
+export const processRefund = async (
+  userId: string,
+  eventId: string,
+): Promise<RefundResult | null> => {
   const TransactionModel = (await import('../models/Transaction.js')).default;
   const EventModel = (await import('../models/Event.js')).default;
   const event = await EventModel.findById(eventId);
@@ -309,7 +321,7 @@ export const processRefund = async (userId: string, eventId: string) => {
   });
 
   if (!transaction || !transaction.stripePaymentIntentId) {
-    return; // No payment to refund
+    return null; // No payment to refund
   }
 
   // Calculate Refund Amount
@@ -342,5 +354,11 @@ export const processRefund = async (userId: string, eventId: string) => {
   transaction.status = 'REFUNDED';
   await transaction.save();
 
-  return refund;
+  // Return structured refund details for consumer use
+  return {
+    refunded: true,
+    amount: refundAmount,
+    currency: event.currency || 'usd',
+    stripeRefundId: refund.id,
+  };
 };

@@ -121,8 +121,44 @@ const EventDetails: React.FC = () => {
         )
       ) {
         leave(undefined, {
-          onSuccess: () => {
-            enqueueSnackbar('Left event. processing refund if applicable.', { variant: 'success' });
+          onSuccess: (response) => {
+            const refund = response.data?.refund as
+              | {
+                  refunded: boolean;
+                  amount?: number;
+                  currency?: string;
+                  reason?: 'past_deadline' | 'no_payment' | 'zero_amount';
+                }
+              | undefined;
+
+            if (refund?.refunded && refund.amount) {
+              // Successful refund - show amount
+              const amountFormatted = (refund.amount / 100).toFixed(2);
+              const currencySymbol =
+                refund.currency === 'usd' ? '$' : refund.currency?.toUpperCase() + ' ';
+              enqueueSnackbar(
+                `Left event. Refund of ${currencySymbol}${amountFormatted} is being processed (3-5 business days).`,
+                { variant: 'success', autoHideDuration: 6000 },
+              );
+            } else if (refund?.reason === 'past_deadline') {
+              // Past 24h deadline - no refund
+              enqueueSnackbar(
+                'Left event. No refund available (less than 24 hours before event start).',
+                { variant: 'warning', autoHideDuration: 5000 },
+              );
+            } else if (refund?.reason === 'no_payment') {
+              // No payment on record (e.g., manually added)
+              enqueueSnackbar('Left event successfully.', { variant: 'success' });
+            } else if (refund?.reason === 'zero_amount') {
+              // Refund amount too small after fees
+              enqueueSnackbar('Left event. Refund amount after fees was too small to process.', {
+                variant: 'info',
+                autoHideDuration: 5000,
+              });
+            } else {
+              // Fallback for free events or unexpected cases
+              enqueueSnackbar('Left event successfully.', { variant: 'success' });
+            }
             navigate('/events');
           },
           onError: (err: unknown) => {

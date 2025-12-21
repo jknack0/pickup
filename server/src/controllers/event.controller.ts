@@ -259,10 +259,29 @@ export const leaveEvent = asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('You are not attending this event', 400);
   }
 
+  // Refund info to return to client
+  interface RefundInfo {
+    refunded: boolean;
+    amount?: number; // In cents
+    currency?: string;
+    reason?: 'past_deadline' | 'no_payment' | 'zero_amount';
+  }
+  let refundInfo: RefundInfo = { refunded: false };
+
   // Handle Payment Refund if applicable
   if (event.isPaid) {
     try {
-      await processRefund(userId, id);
+      const result = await processRefund(userId, id);
+      if (result) {
+        refundInfo = {
+          refunded: true,
+          amount: result.amount,
+          currency: result.currency,
+        };
+      } else {
+        // No payment found to refund (e.g., organizer added them manually)
+        refundInfo = { refunded: false, reason: 'no_payment' };
+      }
     } catch (err) {
       // Check if it's the "Too late" error, if so, we might still allow leaving but without refund?
       // User specs: "a user that has paid is able to leave an event up to 24 hours before the event with no penalty, when a user leaves the event before then they are refunded"
@@ -273,9 +292,11 @@ export const leaveEvent = asyncHandler(async (req: Request, res: Response) => {
       // If it throws other errors (stripe error), maybe block?
       const msg = (err as Error).message;
       if (msg.includes('Too late')) {
-        // Proceed without refund
+        // Proceed without refund - past the 24h deadline
+        refundInfo = { refunded: false, reason: 'past_deadline' };
       } else if (msg.includes('Refund amount is zero')) {
-        // Proceed without refund
+        // Proceed without refund - amount too small after fees
+        refundInfo = { refunded: false, reason: 'zero_amount' };
       } else {
         // Real error
         throw err;
@@ -290,5 +311,5 @@ export const leaveEvent = asyncHandler(async (req: Request, res: Response) => {
   // Re-populate
   await event.populate('attendees.user', 'firstName lastName email');
 
-  res.json({ message: 'Left event successfully', event });
+  res.json({ message: 'Left event successfully', event, refund: refundInfo });
 });
