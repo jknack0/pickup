@@ -9,6 +9,8 @@ import {
   Stack,
   Avatar,
   AvatarGroup,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -41,23 +43,43 @@ const AttendeeList: React.FC<AttendeeListProps> = ({
   onAddAttendeeClick,
   onRemoveAttendee,
 }) => {
+  const theme = useTheme();
+  const dark = theme.palette.dark;
+
   const organizerId = typeof organizer === 'object' ? organizer._id : organizer;
   const organizerName = typeof organizer === 'object' ? organizer.firstName : 'Organizer';
 
   return (
-    <Card elevation={0} variant="outlined">
+    <Card
+      elevation={0}
+      sx={{
+        bgcolor: dark.light,
+        border: `1px solid ${alpha(dark.textActive, 0.1)}`,
+        borderRadius: 3,
+      }}
+    >
       <CardContent>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Box display="flex" alignItems="center" gap={1}>
-            <Typography variant="h6">Attendees</Typography>
-            <Chip label={`${attendees.length}`} size="small" />
+            <Typography variant="h6" sx={{ color: dark.textActive }}>
+              Attendees
+            </Typography>
+            <Chip
+              label={`${attendees.length}`}
+              size="small"
+              sx={{
+                bgcolor: alpha(dark.accent, 0.15),
+                color: dark.accent,
+                fontWeight: 600,
+              }}
+            />
           </Box>
           {isOrganizer && !isCanceled && (
             <IconButton
               size="small"
               onClick={onAddAttendeeClick}
               title="Add Attendee"
-              color="primary"
+              sx={{ color: dark.accent }}
             >
               <PersonAddIcon />
             </IconButton>
@@ -78,19 +100,28 @@ const AttendeeList: React.FC<AttendeeListProps> = ({
                   display="flex"
                   justifyContent="space-between"
                   alignItems="center"
-                  p={1}
-                  bgcolor="background.default"
-                  borderRadius={1}
+                  p={1.5}
+                  bgcolor={alpha(dark.textActive, 0.05)}
+                  border={`1px solid ${alpha(dark.textActive, 0.08)}`}
+                  borderRadius={2}
                 >
                   <Box display="flex" alignItems="center" gap={2}>
-                    <Avatar sx={{ width: 32, height: 32, fontSize: '0.8rem' }}>
+                    <Avatar
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        fontSize: '0.8rem',
+                        bgcolor: alpha(dark.accent, 0.2),
+                        color: dark.accent,
+                      }}
+                    >
                       {user?.firstName?.[0]}
                     </Avatar>
                     <Box>
-                      <Typography variant="body2" fontWeight="500">
+                      <Typography variant="body2" fontWeight="500" sx={{ color: dark.textActive }}>
                         {name}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" sx={{ color: dark.text }}>
                         {user?.email}
                       </Typography>
                     </Box>
@@ -100,7 +131,7 @@ const AttendeeList: React.FC<AttendeeListProps> = ({
                     <IconButton
                       size="small"
                       onClick={() => onRemoveAttendee(user?._id)}
-                      color="error"
+                      sx={{ color: theme.palette.error.main }}
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>
@@ -110,7 +141,17 @@ const AttendeeList: React.FC<AttendeeListProps> = ({
             })}
           </Stack>
         ) : (
-          <AvatarGroup max={7} sx={{ justifyContent: 'flex-start' }}>
+          <AvatarGroup
+            max={7}
+            sx={{
+              justifyContent: 'flex-start',
+              '& .MuiAvatar-root': {
+                bgcolor: alpha(dark.accent, 0.2),
+                color: dark.accent,
+                border: `2px solid ${dark.light}`,
+              },
+            }}
+          >
             {attendees.map((att, index) => {
               const person = att as unknown as { user: PopulatedUser };
               const user = person.user;
@@ -125,8 +166,8 @@ const AttendeeList: React.FC<AttendeeListProps> = ({
         )}
 
         <Box mt={2}>
-          <Typography variant="body2" color="text.secondary">
-            Organized by <strong>{organizerName}</strong>
+          <Typography variant="body2" sx={{ color: dark.text }}>
+            Organized by <strong style={{ color: dark.textActive }}>{organizerName}</strong>
           </Typography>
         </Box>
       </CardContent>

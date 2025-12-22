@@ -1,9 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test-utils';
 import JoinEventButton from './JoinEventButton';
 import { describe, it, expect, vi } from 'vitest';
 import type { IEvent } from '@pickup/shared';
 import { EventType, EventFormat, EventStatus } from '@pickup/shared';
-import { BrowserRouter } from 'react-router-dom';
 
 // Mocks
 vi.mock('@hooks/useAuth', () => ({
@@ -14,9 +13,6 @@ vi.mock('@hooks/useEvents', () => ({
 }));
 vi.mock('@/hooks/usePayment', () => ({
   useCreateCheckout: () => ({ mutateAsync: vi.fn() }),
-}));
-vi.mock('notistack', () => ({
-  useSnackbar: () => ({ enqueueSnackbar: vi.fn() }),
 }));
 
 const mockEvent: IEvent = {
@@ -37,16 +33,11 @@ const mockEvent: IEvent = {
 
 describe('JoinEventButton', () => {
   it('opens dialog with position options on click', async () => {
-    render(
-      <BrowserRouter>
-        <JoinEventButton event={mockEvent} />
-      </BrowserRouter>,
-    );
+    render(<JoinEventButton event={mockEvent} />);
 
     const joinButton = screen.getByRole('button', { name: /Join Event/i });
     expect(joinButton).toBeInTheDocument();
 
-    const { fireEvent } = await import('@testing-library/react');
     fireEvent.click(joinButton);
 
     expect(screen.getByText(/Select Positions/i)).toBeInTheDocument();

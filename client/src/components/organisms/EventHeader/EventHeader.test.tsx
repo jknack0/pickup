@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test-utils';
 import { describe, it, expect, vi } from 'vitest';
 import EventHeader from './EventHeader';
 import { EventStatus, EventType, EventFormat, type IEvent } from '@pickup/shared';

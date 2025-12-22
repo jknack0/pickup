@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@/test-utils';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import { Landing } from './Landing';
 import { useNavigate } from 'react-router-dom';
@@ -11,9 +11,13 @@ vi.mock('@templates/HomeLayout', () => ({
   ),
 }));
 
-vi.mock('react-router-dom', () => ({
-  useNavigate: vi.fn(),
-}));
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: vi.fn(),
+  };
+});
 
 // Mock Assets
 vi.mock('@assets/payment-feature.png', () => ({ default: 'payment.png' }));

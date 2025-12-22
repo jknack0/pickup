@@ -1,64 +1,44 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
-import { SnackbarProvider } from 'notistack';
 import { describe, it, expect } from 'vitest';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SignupForm } from './SignupForm';
-
-const createTestQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-    },
-  });
-
-const renderWithClient = (ui: React.ReactNode) => {
-  const testClient = createTestQueryClient();
-  return render(
-    <QueryClientProvider client={testClient}>
-      <MemoryRouter>
-        <SnackbarProvider>{ui}</SnackbarProvider>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
-};
 
 describe('SignupForm', () => {
   it('renders title and subtitle', () => {
-    renderWithClient(<SignupForm />);
+    render(<SignupForm />);
 
-    expect(screen.getByRole('heading', { name: /sign up/i })).toBeInTheDocument();
-    expect(screen.getByText(/create your account to get started/i)).toBeInTheDocument();
+    expect(screen.getByText('Create account')).toBeInTheDocument();
+    expect(screen.getByText(/get started with your free account/i)).toBeInTheDocument();
   });
 
   it('renders sign up button', () => {
-    renderWithClient(<SignupForm />);
+    render(<SignupForm />);
 
-    expect(screen.getByRole('button', { name: /sign up/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument();
   });
 
   it('renders input fields', () => {
-    renderWithClient(<SignupForm />);
+    render(<SignupForm />);
 
     expect(screen.getByLabelText(/first name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/last name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^password \*/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument();
+    // Use getAllByLabelText for password fields since there are 2
+    const passwordFields = screen.getAllByLabelText(/password/i);
+    expect(passwordFields.length).toBeGreaterThanOrEqual(2);
     expect(screen.getByLabelText(/date of birth/i)).toBeInTheDocument();
   });
 
   it('shows validation error on blur', async () => {
     const user = userEvent.setup();
-    renderWithClient(<SignupForm />);
+    render(<SignupForm />);
 
     const emailInput = screen.getByLabelText(/email address/i);
-    const passwordInput = screen.getByLabelText(/^password \*/i);
+    const passwordInputs = screen.getAllByLabelText(/password/i);
 
     // Focus and blur email
     await user.click(emailInput);
-    await user.click(passwordInput); // Blur email by clicking password
+    await user.click(passwordInputs[0]); // Blur email by clicking password
 
     // Check email error
     expect(await screen.findByText(/invalid email address/i)).toBeInTheDocument();

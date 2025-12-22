@@ -1,37 +1,36 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test-utils';
 import Dashboard from './Dashboard';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
 import * as eventHooks from '@/hooks/useEvents';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useUser } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 // Mock dependencies
 vi.mock('@/hooks/useEvents');
+vi.mock('@/hooks/useAuth');
 vi.mock('@/components/molecules/EventCard/EventCard', () => ({
   default: ({ event }: { event: { title: string } }) => (
     <div data-testid="event-card">{event.title}</div>
   ),
 }));
 
-const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
-    useNavigate: () => mockNavigate,
+    useNavigate: vi.fn(),
   };
 });
 
-const createTestQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-    },
-  });
-
 describe('Dashboard', () => {
+  const mockNavigate = vi.fn();
+
   beforeEach(() => {
     vi.clearAllMocks();
+    (useNavigate as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockNavigate);
+    (useUser as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: { user: { firstName: 'Test', lastName: 'User' } },
+    });
   });
 
   it('renders loading state', () => {
@@ -41,13 +40,7 @@ describe('Dashboard', () => {
       error: null,
     });
 
-    render(
-      <QueryClientProvider client={createTestQueryClient()}>
-        <MemoryRouter>
-          <Dashboard />
-        </MemoryRouter>
-      </QueryClientProvider>,
-    );
+    render(<Dashboard />);
 
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
@@ -59,13 +52,7 @@ describe('Dashboard', () => {
       error: new Error('Failed to load'),
     });
 
-    render(
-      <QueryClientProvider client={createTestQueryClient()}>
-        <MemoryRouter>
-          <Dashboard />
-        </MemoryRouter>
-      </QueryClientProvider>,
-    );
+    render(<Dashboard />);
 
     expect(screen.getByText('Failed to load events')).toBeInTheDocument();
   });
@@ -77,21 +64,16 @@ describe('Dashboard', () => {
       error: null,
     });
 
-    render(
-      <QueryClientProvider client={createTestQueryClient()}>
-        <MemoryRouter>
-          <Dashboard />
-        </MemoryRouter>
-      </QueryClientProvider>,
-    );
+    render(<Dashboard />);
 
-    expect(screen.getByText("You haven't created or joined any events yet.")).toBeInTheDocument();
+    // Check for the actual empty state text in the component
+    expect(screen.getByText('No events yet')).toBeInTheDocument();
   });
 
   it('renders events', () => {
     const mockEvents = [
-      { _id: '1', title: 'Volleyball 1' },
-      { _id: '2', title: 'Volleyball 2' },
+      { _id: '1', title: 'Volleyball 1', status: 'ACTIVE' },
+      { _id: '2', title: 'Volleyball 2', status: 'ACTIVE' },
     ];
     (eventHooks.useMyEvents as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
       data: mockEvents,
@@ -99,13 +81,7 @@ describe('Dashboard', () => {
       error: null,
     });
 
-    render(
-      <QueryClientProvider client={createTestQueryClient()}>
-        <MemoryRouter>
-          <Dashboard />
-        </MemoryRouter>
-      </QueryClientProvider>,
-    );
+    render(<Dashboard />);
 
     expect(screen.getAllByTestId('event-card')).toHaveLength(2);
     expect(screen.getByText('Volleyball 1')).toBeInTheDocument();
@@ -118,15 +94,11 @@ describe('Dashboard', () => {
       error: null,
     });
 
-    render(
-      <QueryClientProvider client={createTestQueryClient()}>
-        <MemoryRouter>
-          <Dashboard />
-        </MemoryRouter>
-      </QueryClientProvider>,
-    );
+    render(<Dashboard />);
 
-    fireEvent.click(screen.getByText('Create Event'));
+    // There are multiple "Create Event" buttons, click the first one
+    const createButtons = screen.getAllByText('Create Event');
+    fireEvent.click(createButtons[0]);
     expect(mockNavigate).toHaveBeenCalledWith('/events/new');
   });
 });

@@ -1,27 +1,20 @@
-import { render } from '@testing-library/react';
-import { describe, it } from 'vitest';
+import { render } from '@/test-utils';
+import { describe, it, vi } from 'vitest';
 import { HomeLayout } from './HomeLayout';
-import { MemoryRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useLogout, useUser } from '@hooks/useAuth';
 
-const createTestQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-    },
-  });
+// Mock auth hooks
+vi.mock('@hooks/useAuth');
 
 describe('HomeLayout', () => {
   it('renders without crashing', () => {
-    const client = createTestQueryClient();
+    (useUser as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ data: null });
+    (useLogout as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ mutate: vi.fn() });
+
     render(
-      <QueryClientProvider client={client}>
-        <MemoryRouter>
-          <HomeLayout>
-            <div>Child</div>
-          </HomeLayout>
-        </MemoryRouter>
-      </QueryClientProvider>,
+      <HomeLayout>
+        <div>Child</div>
+      </HomeLayout>,
     );
   });
 });

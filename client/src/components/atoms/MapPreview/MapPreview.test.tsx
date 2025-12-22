@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render } from '@/test-utils';
 import { APIProvider } from '@vis.gl/react-google-maps';
 import MapPreview from './MapPreview';
 import { describe, it } from 'vitest';

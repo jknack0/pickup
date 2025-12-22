@@ -1,4 +1,4 @@
-import { Paper, Box, Typography, Link } from '@mui/material';
+import { Box, Typography, Link, useTheme, alpha } from '@mui/material';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,6 +13,8 @@ export const SignupForm = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { mutate: registerUser, isPending } = useRegister();
   const location = useLocation();
+  const theme = useTheme();
+  const dark = theme.palette.dark;
 
   const {
     register,
@@ -58,17 +60,8 @@ export const SignupForm = () => {
   };
 
   return (
-    <Paper
-      elevation={3}
-      sx={{
-        mb: 4,
-        width: '100%',
-        maxWidth: '500px',
-        p: 4,
-        borderRadius: 2,
-      }}
-    >
-      <AuthHeader title="Sign Up" />
+    <Box sx={{ width: '100%' }}>
+      <AuthHeader title="Create account" subtitle="Get started with your free account" />
 
       <form
         onSubmit={handleSubmit(onSubmit)}
@@ -87,12 +80,22 @@ export const SignupForm = () => {
             py: 1.5,
             fontSize: '1rem',
             fontWeight: 600,
-            textTransform: 'none',
-            borderRadius: 2,
-            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+            borderRadius: '10px',
+            background: `linear-gradient(135deg, ${dark.accent} 0%, #a855f7 100%)`,
+            boxShadow: `0 4px 15px ${alpha(dark.accent, 0.3)}`,
+            '&:hover': {
+              background: `linear-gradient(135deg, ${dark.accent} 0%, #a855f7 100%)`,
+              boxShadow: `0 6px 20px ${alpha(dark.accent, 0.4)}`,
+              transform: 'translateY(-1px)',
+            },
+            '&:disabled': {
+              background: theme.palette.action.disabledBackground,
+              boxShadow: 'none',
+            },
+            transition: 'all 0.2s ease',
           }}
         >
-          {isPending ? 'Signing Up...' : 'Sign Up'}
+          {isPending ? 'Creating account...' : 'Create Account'}
         </Button>
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Typography variant="body2" color="text.secondary">
@@ -102,13 +105,13 @@ export const SignupForm = () => {
               to="/login"
               state={location.state}
               underline="hover"
-              sx={{ fontWeight: 600 }}
+              sx={{ fontWeight: 600, color: dark.accent }}
             >
               Log In
             </Link>
           </Typography>
         </Box>
       </form>
-    </Paper>
+    </Box>
   );
 };

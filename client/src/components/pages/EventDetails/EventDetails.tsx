@@ -15,6 +15,8 @@ import {
   DialogActions,
   Button,
   Divider,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -45,6 +47,8 @@ import { useVerifyPayment } from '@/hooks/usePayment';
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
+  const dark = theme.palette.dark;
 
   // Confirmation Dialog State
   const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
@@ -304,15 +308,31 @@ const EventDetails: React.FC = () => {
 
       <Grid container spacing={4}>
         <Grid size={{ xs: 12, md: 8 }}>
-          <Card elevation={0} variant="outlined">
+          <Card
+            elevation={0}
+            sx={{
+              bgcolor: dark.light,
+              border: `1px solid ${alpha(dark.textActive, 0.1)}`,
+              borderRadius: 3,
+            }}
+          >
             <CardContent>
-              <Typography variant="h5" gutterBottom fontWeight="600">
+              <Typography
+                variant="h5"
+                gutterBottom
+                fontWeight="600"
+                sx={{ color: dark.textActive }}
+              >
                 About this Event
               </Typography>
               <Box my={2}>
-                <Divider />
+                <Divider sx={{ borderColor: alpha(dark.textActive, 0.1) }} />
               </Box>
-              <Typography variant="body1" paragraph sx={{ whiteSpace: 'pre-line' }}>
+              <Typography
+                variant="body1"
+                paragraph
+                sx={{ whiteSpace: 'pre-line', color: dark.text }}
+              >
                 {event.description || 'No description provided by the organizer.'}
               </Typography>
             </CardContent>
@@ -321,37 +341,46 @@ const EventDetails: React.FC = () => {
 
         <Grid size={{ xs: 12, md: 4 }}>
           <Stack spacing={3}>
-            <Card elevation={2}>
+            <Card
+              elevation={0}
+              sx={{
+                bgcolor: dark.light,
+                border: `1px solid ${alpha(dark.textActive, 0.1)}`,
+                borderRadius: 3,
+              }}
+            >
               {event.coordinates && (
-                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                  <MapPreview
-                    lat={event.coordinates.lat}
-                    lng={event.coordinates.lng}
-                    height={200}
-                  />
+                <Box sx={{ p: 1.5, pb: 0 }}>
+                  <Box sx={{ borderRadius: 2, overflow: 'hidden' }}>
+                    <MapPreview
+                      lat={event.coordinates.lat}
+                      lng={event.coordinates.lng}
+                      height={200}
+                    />
+                  </Box>
                 </Box>
               )}
               <CardContent>
                 <Stack spacing={2}>
                   <Box display="flex" gap={2} alignItems="center">
-                    <LocationOnIcon color="action" />
+                    <LocationOnIcon sx={{ color: dark.text }} />
                     <Box>
-                      <Typography variant="subtitle2" color="text.secondary">
+                      <Typography variant="subtitle2" sx={{ color: dark.text }}>
                         Location
                       </Typography>
-                      <Typography variant="body1" fontWeight="500">
+                      <Typography variant="body1" fontWeight="500" sx={{ color: dark.textActive }}>
                         {event.location}
                       </Typography>
                     </Box>
                   </Box>
 
                   <Box display="flex" gap={2} alignItems="center">
-                    <CalendarTodayIcon color="action" />
+                    <CalendarTodayIcon sx={{ color: dark.text }} />
                     <Box>
-                      <Typography variant="subtitle2" color="text.secondary">
+                      <Typography variant="subtitle2" sx={{ color: dark.text }}>
                         Date & Time
                       </Typography>
-                      <Typography variant="body1" fontWeight="500">
+                      <Typography variant="body1" fontWeight="500" sx={{ color: dark.textActive }}>
                         {new Date(event.date).toLocaleDateString(undefined, {
                           weekday: 'long',
                           year: 'numeric',
@@ -359,7 +388,7 @@ const EventDetails: React.FC = () => {
                           day: 'numeric',
                         })}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" sx={{ color: dark.text }}>
                         {new Date(event.date).toLocaleTimeString(undefined, {
                           hour: '2-digit',
                           minute: '2-digit',
@@ -391,10 +420,20 @@ const EventDetails: React.FC = () => {
         </Grid>
       </Grid>
 
-      <Dialog open={addAttendeeDialogOpen} onClose={() => setAddAttendeeDialogOpen(false)}>
-        <DialogTitle>Add Attendee</DialogTitle>
+      <Dialog
+        open={addAttendeeDialogOpen}
+        onClose={() => setAddAttendeeDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            bgcolor: dark.light,
+            border: `1px solid ${alpha(dark.textActive, 0.1)}`,
+            borderRadius: 3,
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: dark.textActive }}>Add Attendee</DialogTitle>
         <DialogContent>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
+          <Typography variant="body2" sx={{ color: dark.text }} gutterBottom>
             Enter the email address of the user you want to add. They must have an account.
           </Typography>
           <TextField
@@ -406,10 +445,22 @@ const EventDetails: React.FC = () => {
             variant="outlined"
             value={attendeeEmail}
             onChange={(e) => setAttendeeEmail(e.target.value)}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                color: dark.textActive,
+                '& fieldset': { borderColor: alpha(dark.textActive, 0.2) },
+                '&:hover fieldset': { borderColor: alpha(dark.textActive, 0.4) },
+                '&.Mui-focused fieldset': { borderColor: dark.accent },
+              },
+              '& .MuiInputLabel-root': { color: dark.text },
+              '& .MuiInputLabel-root.Mui-focused': { color: dark.accent },
+            }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddAttendeeDialogOpen(false)}>Cancel</Button>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setAddAttendeeDialogOpen(false)} sx={{ color: dark.text }}>
+            Cancel
+          </Button>
           <Button onClick={() => executeAdd()} variant="contained" disabled={!attendeeEmail}>
             Add
           </Button>

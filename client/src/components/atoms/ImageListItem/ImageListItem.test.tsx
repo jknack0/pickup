@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/test-utils';
 import { describe, it, expect } from 'vitest';
 import { ImageListItem } from './ImageListItem';
 import { ImageList } from '@atoms/ImageList';

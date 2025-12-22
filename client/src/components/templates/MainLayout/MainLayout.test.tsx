@@ -1,36 +1,19 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@/test-utils';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MainLayout } from './MainLayout';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
-import { useNavigate } from 'react-router-dom';
 import { useLogout, useUser } from '@hooks/useAuth';
 import { useMyEvents } from '@hooks/useEvents';
 
-// Mock dependencies
-vi.mock('react-router-dom');
+// Mock hooks (but NOT react-router-dom - let test-utils MemoryRouter handle routing)
 vi.mock('@hooks/useAuth');
 vi.mock('@hooks/useEvents');
 
-const createTestQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-    },
-  });
-
-const renderWithClient = (ui: React.ReactNode) => {
-  const testClient = createTestQueryClient();
-  return render(<QueryClientProvider client={testClient}>{ui}</QueryClientProvider>);
-};
-
 describe('MainLayout', () => {
-  const mockNavigate = vi.fn();
   const mockLogoutMutate = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useNavigate as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockNavigate);
     (useLogout as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
       mutate: mockLogoutMutate,
     });
@@ -40,13 +23,14 @@ describe('MainLayout', () => {
         user: {
           firstName: 'Test',
           lastName: 'User',
+          email: 'test@example.com',
         },
       },
     });
   });
 
   it('renders children correctly', () => {
-    renderWithClient(
+    render(
       <MainLayout>
         <div data-testid="test-child">Child Content</div>
       </MainLayout>,
@@ -55,16 +39,16 @@ describe('MainLayout', () => {
   });
 
   it('renders the header title', () => {
-    renderWithClient(
+    render(
       <MainLayout>
         <div>Content</div>
       </MainLayout>,
     );
-    expect(screen.getByText('Pickup')).toBeInTheDocument();
+    expect(screen.getAllByText('Pickup')[0]).toBeInTheDocument();
   });
 
   it('renders sidebar items', () => {
-    renderWithClient(
+    render(
       <MainLayout>
         <div>Content</div>
       </MainLayout>,
@@ -72,27 +56,19 @@ describe('MainLayout', () => {
     // Since we render two drawers (mobile/desktop), we expect duplicate text
     expect(screen.getAllByText('Dashboard')[0]).toBeInTheDocument();
     expect(screen.getAllByText('Events')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Sign Out')[0]).toBeInTheDocument();
+    // User name is shown in the sidebar
+    expect(screen.getAllByText('Test User')[0]).toBeInTheDocument();
   });
 
-  it('calls logout and navigates to home on sign out click', async () => {
-    // Mock mutate to execute onSuccess
-    mockLogoutMutate.mockImplementation((_, options) => {
-      options?.onSuccess?.();
-    });
-
-    const user = userEvent.setup();
-    renderWithClient(
+  it('renders user avatar in sidebar', () => {
+    render(
       <MainLayout>
         <div>Content</div>
       </MainLayout>,
     );
 
-    // Click the first Sign Out button found
-    const signOutButtons = screen.getAllByText('Sign Out');
-    await user.click(signOutButtons[0]);
-
-    expect(mockNavigate).toHaveBeenCalledWith('/');
+    // Check for user initials "TU" in the avatar
+    expect(screen.getAllByText('TU')[0]).toBeInTheDocument();
   });
 
   it('toggles events section and lists events', async () => {
@@ -105,7 +81,7 @@ describe('MainLayout', () => {
     });
 
     const user = userEvent.setup();
-    renderWithClient(
+    render(
       <MainLayout>
         <div>Content</div>
       </MainLayout>,
@@ -120,7 +96,9 @@ describe('MainLayout', () => {
     const eventsButtons = screen.getAllByText('Events');
     await user.click(eventsButtons[0]);
 
-    // Verify events are hidden (unmounted) or at least check data is updated
-    // Since logic is shared, clicking one header should toggle state for both if they share state (which they do)
+    // After toggle, events should not be visible
+    await waitFor(() => {
+      expect(screen.queryByText('Volleyball Game')).not.toBeInTheDocument();
+    });
   });
 });

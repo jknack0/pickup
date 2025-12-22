@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@/test-utils';
 import LocationAutocomplete from './LocationAutocomplete';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { APIProvider } from '@vis.gl/react-google-maps';

@@ -1,5 +1,19 @@
 import { createTheme } from '@mui/material/styles';
 
+// Define our custom dark palette
+const darkPalette = {
+  main: '#0f1219', // Very dark navy/black
+  light: '#1a1f2e', // Slightly lighter for hover states
+  dark: '#0a0d12', // Even darker for contrast
+  paper: '#1e2433', // Card/surface backgrounds
+  divider: '#2d3548', // Border color
+  text: '#8b95a9', // Muted text
+  textActive: '#ffffff', // Active/bright text
+  accent: '#6366f1', // Indigo accent
+  accentLight: 'rgba(99, 102, 241, 0.1)', // Accent with transparency
+  accentGlow: 'rgba(99, 102, 241, 0.3)', // For glow effects
+};
+
 const slate = {
   50: '#f8fafc',
   100: '#f1f5f9',
@@ -13,13 +27,45 @@ const slate = {
   900: '#0f172a',
 };
 
+// Module augmentation for TypeScript
+declare module '@mui/material/styles' {
+  interface Palette {
+    dark: {
+      main: string;
+      light: string;
+      dark: string;
+      paper: string;
+      divider: string;
+      text: string;
+      textActive: string;
+      accent: string;
+      accentLight: string;
+      accentGlow: string;
+    };
+  }
+  interface PaletteOptions {
+    dark?: {
+      main: string;
+      light: string;
+      dark: string;
+      paper: string;
+      divider: string;
+      text: string;
+      textActive: string;
+      accent: string;
+      accentLight: string;
+      accentGlow: string;
+    };
+  }
+}
+
 export const theme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: slate[900], // Dark slate for a premium, stark look
-      light: slate[800],
-      dark: '#000000',
+      main: darkPalette.accent, // Use indigo as primary
+      light: '#818cf8',
+      dark: '#4f46e5',
       contrastText: '#ffffff',
     },
     secondary: {
@@ -37,6 +83,8 @@ export const theme = createTheme({
       secondary: slate[600],
     },
     divider: slate[200],
+    // Custom dark palette for our dark theme sections
+    dark: darkPalette,
   },
   typography: {
     fontFamily: '"Inter", "system-ui", "sans-serif"',
@@ -97,8 +145,8 @@ export const theme = createTheme({
               borderColor: slate[400],
             },
             '&.Mui-focused fieldset': {
-              borderColor: slate[900],
-              borderWidth: 1,
+              borderColor: darkPalette.accent,
+              borderWidth: 2,
             },
           },
         },

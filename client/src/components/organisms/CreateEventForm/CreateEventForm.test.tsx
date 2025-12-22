@@ -1,29 +1,17 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@/test-utils';
 import { CreateEventForm } from './index';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
-import { SnackbarProvider } from 'notistack';
 import * as clientApi from '@/api/client';
-
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 
 // Mock API
 vi.mock('@/api/client');
 
-const createTestQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
-
-const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
-    useNavigate: () => mockNavigate,
+    useNavigate: vi.fn(),
   };
 });
 
@@ -51,22 +39,15 @@ vi.mock('@/components/atoms/LocationAutocomplete/LocationAutocomplete', () => ({
 }));
 
 describe('CreateEventForm', () => {
+  const mockNavigate = vi.fn();
+
   beforeEach(() => {
     vi.clearAllMocks();
+    (useNavigate as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockNavigate);
   });
 
   it('renders correctly', () => {
-    const client = createTestQueryClient();
-    render(
-      <QueryClientProvider client={client}>
-        <SnackbarProvider>
-          <MemoryRouter>
-            <CreateEventForm />
-          </MemoryRouter>
-        </SnackbarProvider>
-      </QueryClientProvider>,
-    );
-
+    render(<CreateEventForm />);
     expect(screen.getByLabelText(/Event Title/i)).toBeInTheDocument();
   });
 
@@ -75,16 +56,7 @@ describe('CreateEventForm', () => {
       data: { event: { _id: '123' } },
     });
 
-    const client = createTestQueryClient();
-    render(
-      <QueryClientProvider client={client}>
-        <SnackbarProvider>
-          <MemoryRouter>
-            <CreateEventForm />
-          </MemoryRouter>
-        </SnackbarProvider>
-      </QueryClientProvider>,
-    );
+    render(<CreateEventForm />);
 
     fireEvent.change(screen.getByLabelText(/Event Title/i), { target: { value: 'My Event' } });
     // Simulate location selection via mocked input which also generates coordinates now

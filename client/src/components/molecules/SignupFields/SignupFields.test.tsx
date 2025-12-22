@@ -1,20 +1,16 @@
-import { render } from '@testing-library/react';
+import { render } from '@/test-utils';
 import { describe, it } from 'vitest';
 import { SignupFields } from './SignupFields';
 import { useForm } from 'react-hook-form';
-import { MemoryRouter } from 'react-router-dom';
 import type { RegisterInput } from '@pickup/shared';
 
+// Wrapper component to provide form context
 const TestWrapper = () => {
   const {
     register,
     formState: { errors },
   } = useForm<RegisterInput>();
-  return (
-    <MemoryRouter>
-      <SignupFields register={register} errors={errors} />
-    </MemoryRouter>
-  );
+  return <SignupFields register={register} errors={errors} />;
 };
 
 describe('SignupFields', () => {

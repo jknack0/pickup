@@ -1,12 +1,16 @@
 import { type ReactNode } from 'react';
 import { Box } from '@atoms/Box';
 import { HomeHeader } from '@organisms/HomeHeader';
+import { useTheme } from '@mui/material';
 
 interface HomeLayoutProps {
   children: ReactNode;
 }
 
 export const HomeLayout = ({ children }: HomeLayoutProps) => {
+  const theme = useTheme();
+  const dark = theme.palette.dark;
+
   return (
     <Box
       sx={{
@@ -20,19 +24,18 @@ export const HomeLayout = ({ children }: HomeLayoutProps) => {
       <Box component="main" sx={{ flexGrow: 1 }}>
         {children}
       </Box>
-      {/* Footer placeholder */}
+      {/* Footer */}
       <Box
         component="footer"
         sx={{
-          py: 3,
+          py: 4,
           px: 2,
           mt: 'auto',
-          backgroundColor: 'background.paper',
-          borderTop: '1px solid',
-          borderColor: 'divider',
+          backgroundColor: dark.main,
+          borderTop: `1px solid ${dark.divider}`,
         }}
       >
-        <Box sx={{ maxWidth: 'lg', mx: 'auto', textAlign: 'center', color: 'text.secondary' }}>
+        <Box sx={{ maxWidth: 'lg', mx: 'auto', textAlign: 'center', color: dark.text }}>
           © {new Date().getFullYear()} Pickup. All rights reserved.
         </Box>
       </Box>
