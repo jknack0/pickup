@@ -7,6 +7,7 @@ import {
   EventStatus,
   AuthRequest,
   USER_PUBLIC_FIELDS,
+  RefundInfo,
 } from '@pickup/shared';
 import { asyncHandler } from '@/utils/asyncHandler.js';
 import { AppError } from '@/middleware/error.middleware.js';
@@ -258,12 +259,6 @@ export const leaveEvent = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Refund info to return to client
-  interface RefundInfo {
-    refunded: boolean;
-    amount?: number; // In cents
-    currency?: string;
-    reason?: 'past_deadline' | 'no_payment' | 'zero_amount';
-  }
   let refundInfo: RefundInfo = { refunded: false };
 
   // Handle Payment Refund if applicable

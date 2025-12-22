@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@api/client';
 import type { RegisterInput, LoginInput } from '@pickup/shared';
+import { queryKeys } from '@/lib/queryKeys';
 
 // API Functions
 const getMe = async () => {
@@ -29,7 +30,7 @@ const logout = async () => {
 // Hooks
 export const useUser = () => {
   return useQuery({
-    queryKey: ['me'],
+    queryKey: queryKeys.user.me,
     queryFn: getMe,
     retry: 0,
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -41,7 +42,7 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: login,
     onSuccess: (data) => {
-      queryClient.setQueryData(['me'], { user: data.user });
+      queryClient.setQueryData(queryKeys.user.me, { user: data.user });
     },
   });
 };
@@ -51,7 +52,7 @@ export const useRegister = () => {
   return useMutation({
     mutationFn: register,
     onSuccess: (data) => {
-      queryClient.setQueryData(['me'], { user: data.user });
+      queryClient.setQueryData(queryKeys.user.me, { user: data.user });
     },
   });
 };
@@ -61,7 +62,7 @@ export const useLogout = () => {
   return useMutation({
     mutationFn: logout,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['me'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.user.me });
     },
   });
 };

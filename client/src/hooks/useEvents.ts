@@ -11,12 +11,13 @@ import {
   addAttendee,
 } from '@/api/client';
 import type { IEvent, CreateEventInput, AnyData } from '@pickup/shared';
+import { queryKeys } from '@/lib/queryKeys';
 
 // -- Queries --
 
 export const useMyEvents = () => {
   return useQuery({
-    queryKey: ['events', 'mine'],
+    queryKey: queryKeys.events.mine(),
     queryFn: async () => {
       const { data } = await getMyEvents();
       return data.events as IEvent[];
@@ -26,7 +27,7 @@ export const useMyEvents = () => {
 
 export const useEvent = (id: string) => {
   return useQuery({
-    queryKey: ['event', id],
+    queryKey: queryKeys.events.detail(id),
     queryFn: async () => {
       const { data } = await getEvent(id);
       return data.event as IEvent;
@@ -42,7 +43,7 @@ export const useCreateEvent = () => {
   return useMutation({
     mutationFn: (data: CreateEventInput) => createEvent(data),
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ['events', 'mine'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.mine() });
       // Return data so component can navigate to new event
       return response;
     },
@@ -55,8 +56,8 @@ export const useJoinEvent = (eventId: string) => {
     mutationFn: (positions: string[]) => joinEvent(eventId, positions),
     onSuccess: () => {
       // Always invalidate to ensure fresh data from server
-      queryClient.invalidateQueries({ queryKey: ['event', eventId] });
-      queryClient.invalidateQueries({ queryKey: ['events', 'mine'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(eventId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.mine() });
     },
   });
 };
@@ -66,8 +67,8 @@ export const useUpdateRSVP = (eventId: string) => {
   return useMutation({
     mutationFn: (status: string) => updateRSVP(eventId, status),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['event', eventId] });
-      queryClient.invalidateQueries({ queryKey: ['events', 'mine'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(eventId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.mine() });
     },
   });
 };
@@ -78,14 +79,14 @@ export const useCancelEvent = (eventId: string) => {
     mutationFn: () => cancelEvent(eventId),
     onSuccess: (responseData) => {
       if (responseData.data && responseData.data.event) {
-        queryClient.setQueryData(['event', eventId], (old: AnyData) => ({
+        queryClient.setQueryData(queryKeys.events.detail(eventId), (old: AnyData) => ({
           ...old,
           data: { ...old.data, event: responseData.data.event },
         }));
       } else {
-        queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(eventId) });
       }
-      queryClient.invalidateQueries({ queryKey: ['events', 'mine'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.mine() });
     },
   });
 };
@@ -96,12 +97,12 @@ export const useRemoveAttendee = (eventId: string) => {
     mutationFn: (userId: string) => removeAttendee(eventId, userId),
     onSuccess: (responseData) => {
       if (responseData.data && responseData.data.event) {
-        queryClient.setQueryData(['event', eventId], (old: AnyData) => ({
+        queryClient.setQueryData(queryKeys.events.detail(eventId), (old: AnyData) => ({
           ...old,
           data: { ...old.data, event: responseData.data.event },
         }));
       } else {
-        queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(eventId) });
       }
     },
   });
@@ -113,12 +114,12 @@ export const useAddAttendee = (eventId: string) => {
     mutationFn: (email: string) => addAttendee(eventId, email),
     onSuccess: (responseData) => {
       if (responseData.data && responseData.data.event) {
-        queryClient.setQueryData(['event', eventId], (old: AnyData) => ({
+        queryClient.setQueryData(queryKeys.events.detail(eventId), (old: AnyData) => ({
           ...old,
           data: { ...old.data, event: responseData.data.event },
         }));
       } else {
-        queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(eventId) });
       }
     },
   });
@@ -130,14 +131,14 @@ export const useLeaveEvent = (eventId: string) => {
     mutationFn: () => leaveEvent(eventId),
     onSuccess: (responseData) => {
       if (responseData.data && responseData.data.event) {
-        queryClient.setQueryData(['event', eventId], (old: AnyData) => ({
+        queryClient.setQueryData(queryKeys.events.detail(eventId), (old: AnyData) => ({
           ...old,
           data: { ...old.data, event: responseData.data.event },
         }));
       } else {
-        queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(eventId) });
       }
-      queryClient.invalidateQueries({ queryKey: ['events', 'mine'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.mine() });
     },
   });
 };

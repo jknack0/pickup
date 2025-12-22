@@ -19,8 +19,8 @@ import {
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { useParams, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import { AttendeeStatus } from '@pickup/shared';
-import type { IEvent } from '@pickup/shared';
+import { AttendeeStatus, EventStatus } from '@pickup/shared';
+import type { IEvent, RefundInfo } from '@pickup/shared';
 import { useSnackbar } from 'notistack';
 import { useUser } from '@hooks/useAuth';
 import MapPreview from '@/components/atoms/MapPreview/MapPreview';
@@ -32,7 +32,6 @@ import {
   useAddAttendee,
   useLeaveEvent,
 } from '@/hooks/useEvents';
-import { EventStatus } from '@pickup/shared';
 import TextField from '@mui/material/TextField';
 import ConfirmationDialog from '@/components/molecules/ConfirmationDialog';
 
@@ -49,6 +48,9 @@ const EventDetails: React.FC = () => {
 
   // Confirmation Dialog State
   const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
+  const [leaveDialogOpen, setLeaveDialogOpen] = React.useState(false);
+  const [removeDialogOpen, setRemoveDialogOpen] = React.useState(false);
+  const [attendeeToRemove, setAttendeeToRemove] = React.useState<string | null>(null);
 
   const { data: userData, isLoading: isUserLoading } = useUser();
   const userId = userData?.user?._id;
@@ -113,62 +115,55 @@ const EventDetails: React.FC = () => {
 
   const { mutate: leave } = useLeaveEvent(id as string);
 
+  const executeLeaveEvent = () => {
+    leave(undefined, {
+      onSuccess: (response) => {
+        setLeaveDialogOpen(false);
+        const refund = response.data?.refund as RefundInfo | undefined;
+
+        if (refund?.refunded && refund.amount) {
+          // Successful refund - show amount
+          const amountFormatted = (refund.amount / 100).toFixed(2);
+          const currencySymbol =
+            refund.currency === 'usd' ? '$' : refund.currency?.toUpperCase() + ' ';
+          enqueueSnackbar(
+            `Left event. Refund of ${currencySymbol}${amountFormatted} is being processed (3-5 business days).`,
+            { variant: 'success', autoHideDuration: 6000 },
+          );
+        } else if (refund?.reason === 'past_deadline') {
+          // Past 24h deadline - no refund
+          enqueueSnackbar(
+            'Left event. No refund available (less than 24 hours before event start).',
+            { variant: 'warning', autoHideDuration: 5000 },
+          );
+        } else if (refund?.reason === 'no_payment') {
+          // No payment on record (e.g., manually added)
+          enqueueSnackbar('Left event successfully.', { variant: 'success' });
+        } else if (refund?.reason === 'zero_amount') {
+          // Refund amount too small after fees
+          enqueueSnackbar('Left event. Refund amount after fees was too small to process.', {
+            variant: 'info',
+            autoHideDuration: 5000,
+          });
+        } else {
+          // Fallback for free events or unexpected cases
+          enqueueSnackbar('Left event successfully.', { variant: 'success' });
+        }
+        navigate('/events');
+      },
+      onError: (err: unknown) => {
+        setLeaveDialogOpen(false);
+        const error = err as { response?: { data?: { message?: string } } };
+        enqueueSnackbar(error.response?.data?.message || 'Failed to leave event', {
+          variant: 'error',
+        });
+      },
+    });
+  };
+
   const executeUpdateStatus = (status: AttendeeStatus) => {
     if (status === AttendeeStatus.NO && eventData?.isPaid) {
-      if (
-        window.confirm(
-          'Leaving this paid event will verify your refund eligibility (24h policy). Continue?',
-        )
-      ) {
-        leave(undefined, {
-          onSuccess: (response) => {
-            const refund = response.data?.refund as
-              | {
-                  refunded: boolean;
-                  amount?: number;
-                  currency?: string;
-                  reason?: 'past_deadline' | 'no_payment' | 'zero_amount';
-                }
-              | undefined;
-
-            if (refund?.refunded && refund.amount) {
-              // Successful refund - show amount
-              const amountFormatted = (refund.amount / 100).toFixed(2);
-              const currencySymbol =
-                refund.currency === 'usd' ? '$' : refund.currency?.toUpperCase() + ' ';
-              enqueueSnackbar(
-                `Left event. Refund of ${currencySymbol}${amountFormatted} is being processed (3-5 business days).`,
-                { variant: 'success', autoHideDuration: 6000 },
-              );
-            } else if (refund?.reason === 'past_deadline') {
-              // Past 24h deadline - no refund
-              enqueueSnackbar(
-                'Left event. No refund available (less than 24 hours before event start).',
-                { variant: 'warning', autoHideDuration: 5000 },
-              );
-            } else if (refund?.reason === 'no_payment') {
-              // No payment on record (e.g., manually added)
-              enqueueSnackbar('Left event successfully.', { variant: 'success' });
-            } else if (refund?.reason === 'zero_amount') {
-              // Refund amount too small after fees
-              enqueueSnackbar('Left event. Refund amount after fees was too small to process.', {
-                variant: 'info',
-                autoHideDuration: 5000,
-              });
-            } else {
-              // Fallback for free events or unexpected cases
-              enqueueSnackbar('Left event successfully.', { variant: 'success' });
-            }
-            navigate('/events');
-          },
-          onError: (err: unknown) => {
-            const error = err as { response?: { data?: { message?: string } } };
-            enqueueSnackbar(error.response?.data?.message || 'Failed to leave event', {
-              variant: 'error',
-            });
-          },
-        });
-      }
+      setLeaveDialogOpen(true);
       return;
     }
 
@@ -223,8 +218,15 @@ const EventDetails: React.FC = () => {
   };
 
   const handleRemoveAttendee = (userId: string) => {
-    if (window.confirm('Are you sure you want to remove this attendee?')) {
-      executeRemove(userId);
+    setAttendeeToRemove(userId);
+    setRemoveDialogOpen(true);
+  };
+
+  const executeRemoveConfirmed = () => {
+    if (attendeeToRemove) {
+      executeRemove(attendeeToRemove);
+      setRemoveDialogOpen(false);
+      setAttendeeToRemove(null);
     }
   };
 
@@ -423,6 +425,29 @@ const EventDetails: React.FC = () => {
         confirmText="Yes, Cancel Event"
         confirmColor="error"
         isLoading={isCanceling}
+      />
+
+      <ConfirmationDialog
+        open={leaveDialogOpen}
+        title="Leave Paid Event"
+        content="Leaving this paid event will verify your refund eligibility (24h policy). Continue?"
+        onConfirm={executeLeaveEvent}
+        onCancel={() => setLeaveDialogOpen(false)}
+        confirmText="Yes, Leave Event"
+        confirmColor="warning"
+      />
+
+      <ConfirmationDialog
+        open={removeDialogOpen}
+        title="Remove Attendee"
+        content="Are you sure you want to remove this attendee from the event?"
+        onConfirm={executeRemoveConfirmed}
+        onCancel={() => {
+          setRemoveDialogOpen(false);
+          setAttendeeToRemove(null);
+        }}
+        confirmText="Yes, Remove"
+        confirmColor="error"
       />
     </Container>
   );

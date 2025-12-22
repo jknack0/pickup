@@ -16,6 +16,12 @@ import {
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { AppError } from '../middleware/error.middleware.js';
 
+// Lazy model loaders to avoid circular dependency issues
+// These are used instead of static imports because payment.controller.ts is imported
+// by event.controller.ts which imports Event model, creating a circular dependency
+const getEventModel = async () => (await import('../models/Event.js')).default;
+const getTransactionModel = async () => (await import('../models/Transaction.js')).default;
+
 // 1. Onboard Organizer
 export const onboardOrganizer = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as AuthRequest).user?.id;
@@ -99,9 +105,8 @@ export const createCheckoutSession = asyncHandler(async (req: Request, res: Resp
     throw new AppError('Unauthorized', 401);
   }
 
-  const event = await (await import('../models/Event.js')).default
-    .findById(eventId)
-    .populate('organizer');
+  const EventModel = await getEventModel();
+  const event = await EventModel.findById(eventId).populate('organizer');
 
   if (!event) {
     throw new AppError('Event not found', 404);
@@ -182,9 +187,9 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
 
       try {
         // Add user to event
-        const EventModel = (await import('../models/Event.js')).default;
+        const EventModel = await getEventModel();
         const eventDoc = await EventModel.findById(eventId);
-        const TransactionModel = (await import('../models/Transaction.js')).default;
+        const TransactionModel = await getTransactionModel();
 
         if (eventDoc) {
           // Check if already joined
@@ -241,9 +246,9 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
   const { eventId, positions } = session.metadata;
 
   // Add user to event
-  const EventModel = (await import('../models/Event.js')).default;
+  const EventModel = await getEventModel();
   const eventDoc = await EventModel.findById(eventId);
-  const TransactionModel = (await import('../models/Transaction.js')).default;
+  const TransactionModel = await getTransactionModel();
 
   if (!eventDoc) {
     throw new AppError('Event not found', 404);
@@ -295,8 +300,8 @@ export const processRefund = async (
   userId: string,
   eventId: string,
 ): Promise<RefundResult | null> => {
-  const TransactionModel = (await import('../models/Transaction.js')).default;
-  const EventModel = (await import('../models/Event.js')).default;
+  const TransactionModel = await getTransactionModel();
+  const EventModel = await getEventModel();
   const event = await EventModel.findById(eventId);
 
   if (!event) throw new Error('Event not found');
