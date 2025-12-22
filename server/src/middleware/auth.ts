@@ -1,11 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 
 import User from '@/models/User.js';
-
-interface AuthRequest extends Request {
-  user?: { id: string; [key: string]: unknown };
-}
+import { AuthRequest } from '@pickup/shared';
 
 export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const token = req.cookies.token;

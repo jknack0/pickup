@@ -4,7 +4,8 @@ export default {
     roots: ['<rootDir>/src'],
     extensionsToTreatAsEsm: ['.ts'],
     moduleNameMapper: {
-        '^@pickup/shared$': '<rootDir>/../packages/shared/dist/index.js',
+        // Map to source TS so ts-jest can transform it
+        '^@pickup/shared$': '<rootDir>/../packages/shared/src/index.ts',
         '^@/(.*)\\.js$': '<rootDir>/src/$1',
         '^@/(.*)$': '<rootDir>/src/$1',
         '^(\\.{1,2}/.*)\\.js$': '$1',
@@ -14,5 +15,10 @@ export default {
             useESM: true,
             tsconfig: 'tsconfig.json'
         }]
-    }
+    },
+    // Transform shared package (it's outside node_modules but still ESM)
+    transformIgnorePatterns: [
+        '/node_modules/(?!@pickup)'
+    ],
 };
+

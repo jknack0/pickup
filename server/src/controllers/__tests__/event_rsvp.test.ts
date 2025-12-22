@@ -77,7 +77,7 @@ describe('Event Controller - RSVP', () => {
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'You differ not attending this event' }),
+        expect.objectContaining({ message: 'You are not attending this event' }),
       );
     });
   });

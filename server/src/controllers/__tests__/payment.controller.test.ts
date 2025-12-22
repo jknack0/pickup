@@ -39,12 +39,14 @@ import TransactionModel from '@/models/Transaction.js';
 describe('Payment Controller', () => {
   let mockRequest: Partial<Request> & { user?: { id: string } };
   let mockResponse: Partial<Response>;
+  let mockNext: jest.Mock;
   let jsonMock: jest.Mock;
   let statusMock: jest.Mock;
 
   beforeEach(() => {
     jsonMock = jest.fn();
     statusMock = jest.fn().mockReturnValue({ json: jsonMock });
+    mockNext = jest.fn();
 
     mockResponse = {
       status: statusMock,
@@ -84,6 +86,7 @@ describe('Payment Controller', () => {
       await paymentController.verifyPayment(
         mockRequest as unknown as Request,
         mockResponse as unknown as Response,
+        mockNext,
       );
 
       // Check if user was added
@@ -110,11 +113,11 @@ describe('Payment Controller', () => {
       );
 
       expect(jsonMock).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'Payment verified and verified', verified: true }),
+        expect.objectContaining({ message: 'Payment verified successfully', verified: true }),
       );
     });
 
-    it('should return 400 if payment not completed', async () => {
+    it('should call next with AppError if payment not completed', async () => {
       mockRequest.body = { sessionId: 'cs_test_incomplete' };
       (stripe.checkout.sessions.retrieve as jest.Mock).mockResolvedValue({
         payment_status: 'unpaid',
@@ -123,15 +126,15 @@ describe('Payment Controller', () => {
       await paymentController.verifyPayment(
         mockRequest as unknown as Request,
         mockResponse as unknown as Response,
+        mockNext,
       );
 
-      expect(statusMock).toHaveBeenCalledWith(400);
-      expect(jsonMock).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'Payment not completed' }),
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Payment not completed', statusCode: 400 }),
       );
     });
 
-    it('should return 400 if wrong session type', async () => {
+    it('should call next with AppError if wrong session type', async () => {
       mockRequest.body = { sessionId: 'cs_test_wrong_type' };
       (stripe.checkout.sessions.retrieve as jest.Mock).mockResolvedValue({
         payment_status: 'paid',
@@ -141,11 +144,11 @@ describe('Payment Controller', () => {
       await paymentController.verifyPayment(
         mockRequest as unknown as Request,
         mockResponse as unknown as Response,
+        mockNext,
       );
 
-      expect(statusMock).toHaveBeenCalledWith(400);
-      expect(jsonMock).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'Invalid session type' }),
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Invalid session type', statusCode: 400 }),
       );
     });
 
@@ -171,6 +174,7 @@ describe('Payment Controller', () => {
       await paymentController.verifyPayment(
         mockRequest as unknown as Request,
         mockResponse as unknown as Response,
+        mockNext,
       );
 
       expect(mockEvent.save).not.toHaveBeenCalled();
@@ -209,6 +213,7 @@ describe('Payment Controller', () => {
       await paymentController.createCheckoutSession(
         mockRequest as unknown as Request,
         mockResponse as unknown as Response,
+        mockNext,
       );
 
       expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
@@ -226,7 +231,7 @@ describe('Payment Controller', () => {
       });
     });
 
-    it('should fail if organizer not onboarded', async () => {
+    it('should call next with AppError if organizer not onboarded', async () => {
       mockRequest.body = { eventId: 'event123' };
       const mockEvent = {
         isPaid: true,
@@ -240,11 +245,14 @@ describe('Payment Controller', () => {
       await paymentController.createCheckoutSession(
         mockRequest as unknown as Request,
         mockResponse as unknown as Response,
+        mockNext,
       );
 
-      expect(statusMock).toHaveBeenCalledWith(400);
-      expect(jsonMock).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'Organizer cannot accept payments yet' }),
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Organizer cannot accept payments yet',
+          statusCode: 400,
+        }),
       );
     });
   });

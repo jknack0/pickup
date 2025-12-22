@@ -1,16 +1,16 @@
 import { Request, Response } from 'express';
 import Event, { IEventDocument } from '@/models/Event.js';
 import User from '@/models/User.js';
-import { CreateEventInput, AttendeeStatus, EventStatus } from '@pickup/shared';
+import {
+  CreateEventInput,
+  AttendeeStatus,
+  EventStatus,
+  AuthRequest,
+  USER_PUBLIC_FIELDS,
+} from '@pickup/shared';
 import { asyncHandler } from '@/utils/asyncHandler.js';
 import { AppError } from '@/middleware/error.middleware.js';
 import { processRefund } from '@/controllers/payment.controller.js';
-
-interface AuthRequest extends Request {
-  user?: {
-    id: string;
-  };
-}
 
 const isOrganizer = (event: IEventDocument, userId: string) =>
   event.organizer.toString() === userId;
@@ -42,8 +42,8 @@ export const createEvent = asyncHandler(async (req: Request, res: Response) => {
   await event.save();
 
   // Populate organizer details for the response
-  await event.populate('organizer', 'firstName lastName email');
-  await event.populate('attendees.user', 'firstName lastName email');
+  await event.populate('organizer', USER_PUBLIC_FIELDS);
+  await event.populate('attendees.user', USER_PUBLIC_FIELDS);
 
   res.status(201).json({ event });
 });
@@ -51,8 +51,8 @@ export const createEvent = asyncHandler(async (req: Request, res: Response) => {
 export const getEvent = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const event = await Event.findById(id)
-    .populate('organizer', 'firstName lastName email')
-    .populate('attendees.user', 'firstName lastName email');
+    .populate('organizer', USER_PUBLIC_FIELDS)
+    .populate('attendees.user', USER_PUBLIC_FIELDS);
 
   if (!event) {
     throw new AppError('Event not found', 404);
@@ -72,8 +72,8 @@ export const listMyEvents = asyncHandler(async (req: Request, res: Response) => 
     $or: [{ organizer: userId }, { 'attendees.user': userId }],
   })
     .sort({ date: 1 }) // Closest dates first
-    .populate('organizer', 'firstName lastName email')
-    .populate('attendees.user', 'firstName lastName email');
+    .populate('organizer', USER_PUBLIC_FIELDS)
+    .populate('attendees.user', USER_PUBLIC_FIELDS);
 
   res.json({ events });
 });
@@ -112,7 +112,7 @@ export const joinEvent = asyncHandler(async (req: Request, res: Response) => {
   await event.save();
 
   // Re-populate for response
-  await event.populate('attendees.user', 'firstName lastName email');
+  await event.populate('attendees.user', USER_PUBLIC_FIELDS);
 
   res.json({ message: 'Joined event successfully', event });
 });
@@ -133,14 +133,14 @@ export const updateRSVP = asyncHandler(async (req: Request, res: Response) => {
 
   const attendeeIndex = event.attendees.findIndex((att) => att.user.toString() === userId);
   if (attendeeIndex === -1) {
-    throw new AppError('You differ not attending this event', 400);
+    throw new AppError('You are not attending this event', 400);
   }
 
   // Update status
   event.attendees[attendeeIndex].status = status;
 
   await event.save();
-  await event.populate('attendees.user', 'firstName lastName email');
+  await event.populate('attendees.user', USER_PUBLIC_FIELDS);
 
   res.json({ message: 'RSVP updated', event });
 });
@@ -165,8 +165,8 @@ export const cancelEvent = asyncHandler(async (req: Request, res: Response) => {
   event.status = EventStatus.CANCELED;
   await event.save();
 
-  await event.populate('organizer', 'firstName lastName email');
-  await event.populate('attendees.user', 'firstName lastName email');
+  await event.populate('organizer', USER_PUBLIC_FIELDS);
+  await event.populate('attendees.user', USER_PUBLIC_FIELDS);
 
   res.json({ message: 'Event canceled', event });
 });
@@ -191,8 +191,8 @@ export const removeAttendee = asyncHandler(async (req: Request, res: Response) =
   event.attendees = event.attendees.filter((att) => att.user.toString() !== targetUserId);
   await event.save();
 
-  await event.populate('attendees.user', 'firstName lastName email');
-  await event.populate('organizer', 'firstName lastName email');
+  await event.populate('attendees.user', USER_PUBLIC_FIELDS);
+  await event.populate('organizer', USER_PUBLIC_FIELDS);
 
   res.json({ message: 'Attendee removed', event });
 });
@@ -233,13 +233,11 @@ export const addAttendee = asyncHandler(async (req: Request, res: Response) => {
 
   await event.save();
 
-  await event.populate('attendees.user', 'firstName lastName email');
-  await event.populate('organizer', 'firstName lastName email');
+  await event.populate('attendees.user', USER_PUBLIC_FIELDS);
+  await event.populate('organizer', USER_PUBLIC_FIELDS);
 
   res.json({ message: 'Attendee added', event });
 });
-// ... (previous content)
-// ... (previous content)
 
 export const leaveEvent = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -309,7 +307,7 @@ export const leaveEvent = asyncHandler(async (req: Request, res: Response) => {
   await event.save();
 
   // Re-populate
-  await event.populate('attendees.user', 'firstName lastName email');
+  await event.populate('attendees.user', USER_PUBLIC_FIELDS);
 
   res.json({ message: 'Left event successfully', event, refund: refundInfo });
 });

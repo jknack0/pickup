@@ -8,12 +8,16 @@ import User from '@/models/User.js';
 jest.mock('@/models/Event.js');
 jest.mock('@/models/User.js');
 jest.mock('@/utils/logger.js');
+
+const USER_PUBLIC_FIELDS = 'firstName lastName email';
+
 jest.mock('@pickup/shared', () => ({
   EventType: { VOLLEYBALL: 'VOLLEYBALL' },
   EventFormat: { OPEN_GYM: 'OPEN_GYM' },
   EventPosition: { SETTER: 'Setter' },
   AttendeeStatus: { YES: 'YES', NO: 'NO', MAYBE: 'MAYBE', WAITLIST: 'WAITLIST' },
   EventStatus: { ACTIVE: 'ACTIVE', CANCELED: 'CANCELED' },
+  USER_PUBLIC_FIELDS: 'firstName lastName email',
 }));
 
 describe('Event Controller', () => {
@@ -77,8 +81,8 @@ describe('Event Controller', () => {
         attendees: [{ user: 'user123', status: 'YES', positions: [] }],
       });
       expect(mockSave).toHaveBeenCalled();
-      expect(mockPopulate).toHaveBeenCalledWith('organizer', 'firstName lastName email');
-      expect(mockPopulate).toHaveBeenCalledWith('attendees.user', 'firstName lastName email');
+      expect(mockPopulate).toHaveBeenCalledWith('organizer', USER_PUBLIC_FIELDS);
+      expect(mockPopulate).toHaveBeenCalledWith('attendees.user', USER_PUBLIC_FIELDS);
       expect(statusMock).toHaveBeenCalledWith(201);
     });
 
@@ -148,8 +152,8 @@ describe('Event Controller', () => {
       );
 
       expect(Event.findById).toHaveBeenCalledWith('event123');
-      expect(mockPopulate1).toHaveBeenCalledWith('organizer', 'firstName lastName email');
-      expect(mockPopulate2).toHaveBeenCalledWith('attendees.user', 'firstName lastName email');
+      expect(mockPopulate1).toHaveBeenCalledWith('organizer', USER_PUBLIC_FIELDS);
+      expect(mockPopulate2).toHaveBeenCalledWith('attendees.user', USER_PUBLIC_FIELDS);
       expect(jsonMock).toHaveBeenCalledWith({ event: mockEvent });
     });
 

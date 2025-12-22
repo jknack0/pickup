@@ -92,3 +92,27 @@ export const CreateEventSchema = z.object({
 );
 
 export type CreateEventInput = z.infer<typeof CreateEventSchema>;
+
+// Schema for joining an event with optional positions
+export const JoinEventSchema = z.object({
+    positions: z.array(z.nativeEnum(EventPosition)).optional(),
+});
+
+export type JoinEventInput = z.infer<typeof JoinEventSchema>;
+
+// Schema for updating RSVP status
+export const UpdateRSVPSchema = z.object({
+    status: z.nativeEnum(AttendeeStatus, {
+        errorMap: () => ({ message: 'Invalid status. Must be YES, NO, MAYBE, or WAITLIST' }),
+    }),
+});
+
+export type UpdateRSVPInput = z.infer<typeof UpdateRSVPSchema>;
+
+// Schema for adding an attendee by email
+export const AddAttendeeSchema = z.object({
+    email: z.string().email('Invalid email address'),
+});
+
+export type AddAttendeeInput = z.infer<typeof AddAttendeeSchema>;
+
