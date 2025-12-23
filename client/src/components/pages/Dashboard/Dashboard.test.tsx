@@ -2,11 +2,13 @@ import { render, screen, fireEvent } from '@/test-utils';
 import Dashboard from './Dashboard';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as eventHooks from '@/hooks/useEvents';
+import * as groupHooks from '@/hooks/useGroups';
 import { useUser } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
 // Mock dependencies
 vi.mock('@/hooks/useEvents');
+vi.mock('@/hooks/useGroups');
 vi.mock('@/hooks/useAuth');
 vi.mock('@/components/molecules/EventCard/EventCard', () => ({
   default: ({ event }: { event: { title: string } }) => (
@@ -31,6 +33,17 @@ describe('Dashboard', () => {
     (useUser as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
       data: { user: { firstName: 'Test', lastName: 'User' } },
     });
+    // Default mocks for groups to avoid loading state
+    (groupHooks.useMyGroups as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    (groupHooks.usePublicGroups as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: { groups: [], total: 0 },
+      isLoading: false,
+      error: null,
+    });
   });
 
   it('renders loading state', () => {
@@ -54,7 +67,7 @@ describe('Dashboard', () => {
 
     render(<Dashboard />);
 
-    expect(screen.getByText('Failed to load events')).toBeInTheDocument();
+    expect(screen.getByText('Failed to load data')).toBeInTheDocument();
   });
 
   it('renders empty state', () => {

@@ -12,6 +12,11 @@ jest.mock('@pickup/shared', () => ({
   EventPosition: { SETTER: 'Setter' },
   AttendeeStatus: { YES: 'YES', NO: 'NO', MAYBE: 'MAYBE', WAITLIST: 'WAITLIST' },
   EventStatus: { ACTIVE: 'ACTIVE', CANCELED: 'CANCELED' },
+  GroupRole: { ADMIN: 'ADMIN', MEMBER: 'MEMBER', MODERATOR: 'MODERATOR' },
+  GroupVisibility: { PUBLIC: 'PUBLIC', PRIVATE: 'PRIVATE' },
+  GroupJoinPolicy: { OPEN: 'OPEN', REQUEST: 'REQUEST', INVITE_ONLY: 'INVITE_ONLY' },
+  MembershipRequestStatus: { PENDING: 'PENDING', APPROVED: 'APPROVED', REJECTED: 'REJECTED' },
+  USER_PUBLIC_FIELDS: 'firstName lastName email',
 }));
 
 describe('Event Controller - RSVP', () => {

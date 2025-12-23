@@ -2,29 +2,44 @@ import React, { useEffect } from 'react';
 import { useForm, Controller, type SubmitHandler, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  TextField,
-  Button,
   Box,
   Typography,
+  Paper,
+  Link,
+  useTheme,
+  alpha,
+  Stack,
   FormControlLabel,
   Checkbox,
   InputAdornment,
 } from '@mui/material';
+import { TextField } from '@/components/atoms/TextField';
+import { Button } from '@/components/atoms/Button';
 import { CreateEventSchema, EventType, EventFormat } from '@pickup/shared';
 import type { CreateEventInput } from '@pickup/shared';
 import { useCreateEvent } from '@/hooks/useEvents';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink, useSearchParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import LocationAutocomplete from '@/components/atoms/LocationAutocomplete/LocationAutocomplete';
+import { useGroup } from '@/hooks/useGroups';
 
 const CreateEventForm: React.FC = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const groupId = searchParams.get('groupId');
+  const theme = useTheme();
+  const dark = theme.palette.dark;
+  const { enqueueSnackbar } = useSnackbar();
+  const { mutateAsync: createEvent, isPending } = useCreateEvent();
+  const { data: group } = useGroup(groupId || '');
+
   const {
     register,
     handleSubmit,
     setValue,
     control,
     watch,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<CreateEventInput>({
     resolver: zodResolver(CreateEventSchema) as Resolver<CreateEventInput>,
     mode: 'onBlur',
@@ -47,14 +62,13 @@ const CreateEventForm: React.FC = () => {
     register('coordinates');
   }, [register]);
 
-  const navigate = useNavigate();
-  const { enqueueSnackbar } = useSnackbar();
-  const { mutateAsync: createEvent } = useCreateEvent();
   const isPaid = watch('isPaid');
 
   const onSubmit: SubmitHandler<CreateEventInput> = async (data) => {
     try {
-      const response = await createEvent(data);
+      // Include groupId if creating a group event
+      const eventData = groupId ? { ...data, groupId } : data;
+      const response = await createEvent(eventData);
       enqueueSnackbar('Event created successfully', { variant: 'success' });
       navigate(`/events/${response.data.event._id}`);
     } catch (error: unknown) {
@@ -69,158 +83,254 @@ const CreateEventForm: React.FC = () => {
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={{ mt: 1 }}>
-      <Typography variant="h6" gutterBottom>
-        Create New Event
-      </Typography>
-
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        id="title"
-        label="Event Title"
-        autoFocus
-        error={!!errors.title}
-        helperText={errors.title?.message}
-        {...register('title')}
-      />
-
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        id="date"
-        label="Date & Time"
-        type="datetime-local"
-        InputLabelProps={{
-          shrink: true,
-        }}
-        error={!!errors.date}
-        helperText={errors.date?.message}
-        {...register('date')}
-      />
-
-      <LocationAutocomplete
-        onPlaceSelect={(place) => {
-          if (place) {
-            setValue('location', place.name || place.formatted_address || '', {
-              shouldValidate: true,
-            });
-            if (place.geometry?.location) {
-              setValue('coordinates', {
-                lat: place.geometry.location.lat(),
-                lng: place.geometry.location.lng(),
-              });
-            }
-          } else {
-            setValue('location', '', { shouldValidate: true });
-            setValue('coordinates', undefined);
-          }
-        }}
-        error={!!errors.location}
-        helperText={errors.location?.message}
-      />
-
-      <TextField
-        select
-        margin="normal"
-        fullWidth
-        id="type"
-        label="Event Type"
-        defaultValue={EventType.VOLLEYBALL}
-        error={!!errors.type}
-        helperText={errors.type?.message}
-        {...register('type')}
-        SelectProps={{
-          native: true,
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        minHeight: '100%',
+        py: { xs: 2, sm: 4 },
+        px: { xs: 2, sm: 3 },
+      }}
+    >
+      <Paper
+        elevation={0}
+        sx={{
+          p: { xs: 3, sm: 5 },
+          borderRadius: 3,
+          backgroundColor: alpha('#ffffff', 0.98),
+          border: '1px solid',
+          borderColor: 'divider',
+          boxShadow: `0 25px 50px -12px ${alpha(dark.main, 0.25)}`,
+          width: '100%',
+          maxWidth: 500,
         }}
       >
-        <option value={EventType.VOLLEYBALL}>Volleyball</option>
-      </TextField>
+        {/* Header */}
+        <Box sx={{ textAlign: 'center', mb: 3 }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              color: 'text.primary',
+              mb: 1,
+            }}
+          >
+            {group ? `New Event for ${group.name}` : 'Create an Event'}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {group
+              ? 'This event will be associated with your group'
+              : 'Set up a new game for your community'}
+          </Typography>
+        </Box>
 
-      <TextField
-        select
-        margin="normal"
-        fullWidth
-        id="format"
-        label="Event Format"
-        defaultValue={EventFormat.OPEN_GYM}
-        error={!!errors.format}
-        helperText={errors.format?.message}
-        {...register('format')}
-        SelectProps={{
-          native: true,
-        }}
-      >
-        <option value={EventFormat.OPEN_GYM}>Open Gym</option>
-        <option value={EventFormat.LEAGUE}>League</option>
-        <option value={EventFormat.TOURNAMENT}>Tournament</option>
-      </TextField>
+        {/* Form */}
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          autoComplete="off"
+          style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+        >
+          <Stack spacing={2.5}>
+            <TextField
+              label="Event Title"
+              fullWidth
+              variant="outlined"
+              required
+              autoFocus
+              error={!!errors.title}
+              helperText={errors.title?.message}
+              {...register('title')}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: 'background.paper',
+                  '&:hover fieldset': { borderColor: 'primary.main' },
+                },
+              }}
+            />
 
-      <TextField
-        margin="normal"
-        fullWidth
-        id="description"
-        label="Description"
-        multiline
-        rows={4}
-        error={!!errors.description}
-        helperText={errors.description?.message}
-        {...register('description')}
-      />
+            <TextField
+              label="Date & Time"
+              type="datetime-local"
+              fullWidth
+              variant="outlined"
+              required
+              InputLabelProps={{ shrink: true }}
+              error={!!errors.date}
+              helperText={errors.date?.message}
+              {...register('date')}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: 'background.paper',
+                  '&:hover fieldset': { borderColor: 'primary.main' },
+                },
+              }}
+            />
 
-      <FormControlLabel
-        control={<Checkbox {...register('isPaid')} color="primary" />}
-        label="This is a paid event"
-      />
+            <LocationAutocomplete
+              onPlaceSelect={(place) => {
+                if (place) {
+                  setValue('location', place.name || place.formatted_address || '', {
+                    shouldValidate: true,
+                  });
+                  if (place.geometry?.location) {
+                    setValue('coordinates', {
+                      lat: place.geometry.location.lat(),
+                      lng: place.geometry.location.lng(),
+                    });
+                  }
+                } else {
+                  setValue('location', '', { shouldValidate: true });
+                  setValue('coordinates', undefined);
+                }
+              }}
+              error={!!errors.location}
+              helperText={errors.location?.message}
+            />
 
-      {/* Note: In a real app we might watch 'isPaid' to conditionally show price, 
-            but using CSS display or just rendering it conditionally works. 
-            React Hook Form's watch approach is better for conditional logic. 
-        */}
+            <TextField
+              select
+              fullWidth
+              variant="outlined"
+              label="Event Type"
+              defaultValue={EventType.VOLLEYBALL}
+              error={!!errors.type}
+              helperText={errors.type?.message}
+              {...register('type')}
+              SelectProps={{ native: true }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: 'background.paper',
+                  '&:hover fieldset': { borderColor: 'primary.main' },
+                },
+              }}
+            >
+              <option value={EventType.VOLLEYBALL}>Volleyball</option>
+            </TextField>
 
-      {/* We need to watch isPaid to conditionally render price, 
-          or just render it and handle validation. 
-          Let's assume the user can set a price if isPaid is checked.
-       */}
-      <Controller
-        name="price"
-        control={control}
-        render={({ field: { onChange, value }, fieldState: { error } }) => (
-          <TextField
-            margin="normal"
+            <TextField
+              select
+              fullWidth
+              variant="outlined"
+              label="Event Format"
+              defaultValue={EventFormat.OPEN_GYM}
+              error={!!errors.format}
+              helperText={errors.format?.message}
+              {...register('format')}
+              SelectProps={{ native: true }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: 'background.paper',
+                  '&:hover fieldset': { borderColor: 'primary.main' },
+                },
+              }}
+            >
+              <option value={EventFormat.OPEN_GYM}>Open Gym</option>
+              <option value={EventFormat.LEAGUE}>League</option>
+              <option value={EventFormat.TOURNAMENT}>Tournament</option>
+            </TextField>
+
+            <TextField
+              label="Description"
+              fullWidth
+              variant="outlined"
+              multiline
+              rows={3}
+              error={!!errors.description}
+              helperText={errors.description?.message}
+              {...register('description')}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: 'background.paper',
+                  '&:hover fieldset': { borderColor: 'primary.main' },
+                },
+              }}
+            />
+
+            <FormControlLabel
+              control={<Checkbox {...register('isPaid')} color="primary" />}
+              label="This is a paid event"
+              sx={{ '& .MuiFormControlLabel-label': { color: 'text.primary' } }}
+            />
+
+            <Controller
+              name="price"
+              control={control}
+              render={({ field: { onChange, value }, fieldState: { error } }) => (
+                <TextField
+                  fullWidth
+                  variant="outlined"
+                  label="Price (USD)"
+                  placeholder="0.00"
+                  disabled={!isPaid}
+                  error={!!error}
+                  helperText={error?.message}
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                  }}
+                  inputProps={{
+                    inputMode: 'numeric',
+                  }}
+                  value={value ? (value / 100).toFixed(2) : ''}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, '');
+                    onChange(Number(digits));
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      bgcolor: 'background.paper',
+                      '&:hover fieldset': { borderColor: 'primary.main' },
+                    },
+                  }}
+                />
+              )}
+            />
+          </Stack>
+
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
             fullWidth
-            id="price"
-            label="Price (USD)"
-            placeholder="0.00"
-            disabled={!isPaid}
-            error={!!error}
-            helperText={error?.message}
-            InputProps={{
-              startAdornment: <InputAdornment position="start">$</InputAdornment>,
+            disabled={isPending}
+            sx={{
+              mt: 2,
+              py: 1.5,
+              fontSize: '1rem',
+              fontWeight: 600,
+              borderRadius: '10px',
+              background: `linear-gradient(135deg, ${dark.accent} 0%, #a855f7 100%)`,
+              boxShadow: `0 4px 15px ${alpha(dark.accent, 0.3)}`,
+              '&:hover': {
+                background: `linear-gradient(135deg, ${dark.accent} 0%, #a855f7 100%)`,
+                boxShadow: `0 6px 20px ${alpha(dark.accent, 0.4)}`,
+                transform: 'translateY(-1px)',
+              },
+              '&:disabled': {
+                background: theme.palette.action.disabledBackground,
+                boxShadow: 'none',
+              },
+              transition: 'all 0.2s ease',
             }}
-            inputProps={{
-              inputMode: 'numeric',
-            }}
-            value={value ? (value / 100).toFixed(2) : ''}
-            onChange={(e) => {
-              const digits = e.target.value.replace(/\D/g, '');
-              onChange(Number(digits));
-            }}
-          />
-        )}
-      />
+          >
+            {isPending ? 'Creating...' : 'Create Event'}
+          </Button>
 
-      <Button
-        type="submit"
-        fullWidth
-        variant="contained"
-        sx={{ mt: 3, mb: 2 }}
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? 'Creating...' : 'Create Event'}
-      </Button>
+          <Box sx={{ mt: 1, textAlign: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
+              Changed your mind?{' '}
+              <Link
+                component={RouterLink}
+                to="/dashboard"
+                underline="hover"
+                sx={{ fontWeight: 600, color: dark.accent }}
+              >
+                Back to Dashboard
+              </Link>
+            </Typography>
+          </Box>
+        </form>
+      </Paper>
     </Box>
   );
 };

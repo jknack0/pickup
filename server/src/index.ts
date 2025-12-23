@@ -23,6 +23,7 @@ import mongoose from 'mongoose';
 import authRoutes from '@/routes/auth.routes.js';
 import eventRoutes from '@/routes/event.routes.js';
 import paymentRoutes from '@/routes/payment.routes.js';
+import groupRoutes from '@/routes/group.routes.js';
 
 import { requestLogger } from '@/middleware/requestLogger.js';
 
@@ -49,6 +50,7 @@ app.use(requestLogger);
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/groups', groupRoutes);
 
 import { errorHandler } from '@/middleware/error.middleware.js';
 app.use(errorHandler);

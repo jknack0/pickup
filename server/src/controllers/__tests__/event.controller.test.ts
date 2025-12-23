@@ -17,6 +17,10 @@ jest.mock('@pickup/shared', () => ({
   EventPosition: { SETTER: 'Setter' },
   AttendeeStatus: { YES: 'YES', NO: 'NO', MAYBE: 'MAYBE', WAITLIST: 'WAITLIST' },
   EventStatus: { ACTIVE: 'ACTIVE', CANCELED: 'CANCELED' },
+  GroupRole: { ADMIN: 'ADMIN', MEMBER: 'MEMBER', MODERATOR: 'MODERATOR' },
+  GroupVisibility: { PUBLIC: 'PUBLIC', PRIVATE: 'PRIVATE' },
+  GroupJoinPolicy: { OPEN: 'OPEN', REQUEST: 'REQUEST', INVITE_ONLY: 'INVITE_ONLY' },
+  MembershipRequestStatus: { PENDING: 'PENDING', APPROVED: 'APPROVED', REJECTED: 'REJECTED' },
   USER_PUBLIC_FIELDS: 'firstName lastName email',
 }));
 
@@ -57,6 +61,8 @@ describe('Event Controller', () => {
         location: 'Beach',
         coordinates: { lat: 10, lng: 20 },
         description: 'Fun game',
+        type: 'VOLLEYBALL',
+        format: 'OPEN_GYM',
       };
 
       const mockSave = jest.fn();
@@ -77,8 +83,13 @@ describe('Event Controller', () => {
 
       expect(Event).toHaveBeenCalledWith({
         ...mockRequest.body,
+        isPaid: undefined,
+        price: undefined,
+        currency: undefined,
         organizer: 'user123',
         attendees: [{ user: 'user123', status: 'YES', positions: [] }],
+        group: undefined,
+        isPublic: true,
       });
       expect(mockSave).toHaveBeenCalled();
       expect(mockPopulate).toHaveBeenCalledWith('organizer', USER_PUBLIC_FIELDS);
@@ -96,6 +107,8 @@ describe('Event Controller', () => {
         isPaid: true,
         price: 1500, // $15.00
         currency: 'usd',
+        type: 'VOLLEYBALL',
+        format: 'OPEN_GYM',
       };
 
       const mockSave = jest.fn();
@@ -117,6 +130,8 @@ describe('Event Controller', () => {
         ...mockRequest.body,
         organizer: 'user123',
         attendees: [{ user: 'user123', status: 'YES', positions: [] }],
+        group: undefined,
+        isPublic: true,
       });
       expect(mockSave).toHaveBeenCalled();
       expect(statusMock).toHaveBeenCalledWith(201);

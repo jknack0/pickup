@@ -22,17 +22,19 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLogout, useUser } from '@hooks/useAuth';
 import { useMyEvents } from '@hooks/useEvents';
+import { useMyGroups } from '@hooks/useGroups';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import EventIcon from '@mui/icons-material/Event';
+import GroupsIcon from '@mui/icons-material/Groups';
 import LogoutIcon from '@mui/icons-material/Logout';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PersonIcon from '@mui/icons-material/Person';
 import SettingsIcon from '@mui/icons-material/Settings';
-import AddIcon from '@mui/icons-material/Add';
 import { EventStatus } from '@pickup/shared';
+import GroupNavItem from '@/components/molecules/GroupNavItem';
 
 const drawerWidth = 260;
 
@@ -46,7 +48,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: events } = useMyEvents();
+  const { data: myGroups } = useMyGroups();
   const [eventsOpen, setEventsOpen] = useState(true);
+  const [groupsOpen, setGroupsOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
 
@@ -76,7 +80,10 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     handleCloseUserMenu();
   };
 
-  const filteredEvents = events?.filter((event) => event.status !== EventStatus.CANCELED);
+  // Filter events: exclude canceled and group events (group events show under their group)
+  const filteredEvents = events?.filter(
+    (event) => event.status !== EventStatus.CANCELED && !event.group,
+  );
 
   // Check if current path matches
   const isActive = (path: string) => location.pathname === path;
@@ -182,6 +189,64 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             </ListItemButton>
           </ListItem>
 
+          {/* Groups Section */}
+          <ListItem disablePadding sx={{ mt: 0.5 }}>
+            <ListItemButton
+              onClick={() => setGroupsOpen(!groupsOpen)}
+              sx={{
+                ...navItemStyles(false),
+                backgroundColor: 'transparent',
+              }}
+            >
+              <ListItemIcon sx={{ color: 'inherit', minWidth: 36 }}>
+                <GroupsIcon sx={{ fontSize: 20 }} />
+              </ListItemIcon>
+              <ListItemText
+                primary="Groups"
+                primaryTypographyProps={{
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                }}
+              />
+              {groupsOpen ? (
+                <ExpandLess sx={{ color: dark.text, fontSize: 20 }} />
+              ) : (
+                <ExpandMore sx={{ color: dark.text, fontSize: 20 }} />
+              )}
+            </ListItemButton>
+          </ListItem>
+
+          {/* Groups List */}
+          <Collapse in={groupsOpen} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding sx={{ pl: 0.5 }}>
+              {/* User's Groups */}
+              {myGroups?.length === 0 && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: alpha(dark.text, 0.5),
+                    px: 2,
+                    py: 1,
+                    ml: 4,
+                    fontSize: '0.75rem',
+                    fontStyle: 'italic',
+                  }}
+                >
+                  No groups yet
+                </Typography>
+              )}
+
+              {myGroups?.map((group) => (
+                <GroupNavItem
+                  key={group._id}
+                  group={group}
+                  navItemStyles={navItemStyles}
+                  onNavigate={() => setMobileOpen(false)}
+                />
+              ))}
+            </List>
+          </Collapse>
+
           {/* Events Section */}
           <ListItem disablePadding sx={{ mt: 0.5 }}>
             <ListItemButton
@@ -212,34 +277,6 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           {/* Events List */}
           <Collapse in={eventsOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding sx={{ pl: 0.5 }}>
-              {/* Create Event Button */}
-              <ListItemButton
-                onClick={() => {
-                  navigate('/events/new');
-                  if (!isDesktop) setMobileOpen(false);
-                }}
-                sx={{
-                  ...navItemStyles(isActive('/events/new')),
-                  py: 0.75,
-                  color: dark.accent,
-                  '&:hover': {
-                    backgroundColor: alpha(dark.accent, 0.1),
-                    color: dark.accent,
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
-                  <AddIcon sx={{ fontSize: 18 }} />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Create Event"
-                  primaryTypographyProps={{
-                    fontSize: '0.8rem',
-                    fontWeight: 500,
-                  }}
-                />
-              </ListItemButton>
-
               {filteredEvents?.length === 0 && (
                 <Typography
                   variant="body2"

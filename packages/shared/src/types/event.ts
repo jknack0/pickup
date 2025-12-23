@@ -56,6 +56,8 @@ export interface IEvent {
     type: EventType;
     format: EventFormat;
     status: EventStatus;
+    group?: string; // Optional Group ID
+    isPublic?: boolean; // For group events: visible to non-members?
     createdAt: Date | string;
     updatedAt: Date | string;
 }
@@ -78,6 +80,8 @@ export const CreateEventSchema = z.object({
     isPaid: z.boolean().default(false),
     type: z.nativeEnum(EventType),
     format: z.nativeEnum(EventFormat),
+    groupId: z.string().optional(), // Optional group association
+    isPublic: z.boolean().default(true), // For group events: visible to non-members
 }).refine(
     (data) => {
         if (data.isPaid) {

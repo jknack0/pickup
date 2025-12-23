@@ -97,9 +97,8 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
         <Box sx={{ p: 1.5, pb: 0 }}>
           <Box
             sx={{
-              width: '95%',
-              mx: 'auto',
-              aspectRatio: '1 / 1',
+              width: '100%',
+              aspectRatio: '16 / 9',
               borderRadius: 2,
               overflow: 'hidden',
             }}

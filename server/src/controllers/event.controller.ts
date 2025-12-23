@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Event, { IEventDocument } from '@/models/Event.js';
 import User from '@/models/User.js';
+import Group from '@/models/Group.js';
 import {
   CreateEventInput,
   AttendeeStatus,
@@ -8,6 +9,7 @@ import {
   AuthRequest,
   USER_PUBLIC_FIELDS,
   RefundInfo,
+  GroupRole,
 } from '@pickup/shared';
 import { asyncHandler } from '@/utils/asyncHandler.js';
 import { AppError } from '@/middleware/error.middleware.js';
@@ -17,12 +19,50 @@ const isOrganizer = (event: IEventDocument, userId: string) =>
   event.organizer.toString() === userId;
 
 export const createEvent = asyncHandler(async (req: Request, res: Response) => {
-  const { title, description, date, location, type, format, coordinates, isPaid, price, currency } =
-    req.body as CreateEventInput;
+  const {
+    title,
+    description,
+    date,
+    location,
+    type,
+    format,
+    coordinates,
+    isPaid,
+    price,
+    currency,
+    groupId,
+    isPublic,
+  } = req.body as CreateEventInput & { groupId?: string; isPublic?: boolean };
   const userId = (req as AuthRequest).user?.id;
 
   if (!userId) {
     throw new AppError('Unauthorized', 401);
+  }
+
+  // If creating within a group, verify permissions
+  let finalPrice = price;
+  let finalCurrency = currency;
+  if (groupId) {
+    const group = await Group.findById(groupId);
+    if (!group) {
+      throw new AppError('Group not found', 404);
+    }
+
+    // Check if user is Admin or Moderator in the group
+    const member = group.members.find((m) => m.user.toString() === userId);
+    if (!member || (member.role !== GroupRole.ADMIN && member.role !== GroupRole.MODERATOR)) {
+      throw new AppError('Only admins and moderators can create events in this group', 403);
+    }
+
+    // Inherit payment settings from group if not specified
+    if (isPaid && group.paymentSettings?.stripeAccountId) {
+      if (!price && group.paymentSettings.defaultPrice) {
+        finalPrice = group.paymentSettings.defaultPrice;
+      }
+      if (!currency && group.paymentSettings.defaultCurrency) {
+        finalCurrency = group.paymentSettings.defaultCurrency;
+      }
+    }
   }
 
   const event = new Event({
@@ -34,10 +74,12 @@ export const createEvent = asyncHandler(async (req: Request, res: Response) => {
     type,
     format,
     isPaid,
-    price,
-    currency,
+    price: finalPrice,
+    currency: finalCurrency,
     organizer: userId,
-    attendees: [{ user: userId, status: AttendeeStatus.YES, positions: [] }], // Organizer is automatically an attendee
+    attendees: [{ user: userId, status: AttendeeStatus.YES, positions: [] }],
+    group: groupId || undefined,
+    isPublic: isPublic ?? true,
   });
 
   await event.save();
@@ -68,13 +110,25 @@ export const listMyEvents = asyncHandler(async (req: Request, res: Response) => 
     throw new AppError('Unauthorized', 401);
   }
 
-  // Find events where user is organizer OR is in attendees list (by checking attendees.user)
+  // Find groups user is a member of
+  const userGroups = await Group.find({ 'members.user': userId }).select('_id');
+  const groupIds = userGroups.map((g) => g._id.toString());
+
+  // Find events where:
+  // 1. User is organizer
+  // 2. User is in attendees list
+  // 3. Event belongs to a group user is a member of
   const events = await Event.find({
-    $or: [{ organizer: userId }, { 'attendees.user': userId }],
+    $or: [
+      { organizer: userId },
+      { 'attendees.user': userId },
+      ...(groupIds.length > 0 ? [{ group: { $in: groupIds } }] : []),
+    ],
   })
     .sort({ date: 1 }) // Closest dates first
     .populate('organizer', USER_PUBLIC_FIELDS)
-    .populate('attendees.user', USER_PUBLIC_FIELDS);
+    .populate('attendees.user', USER_PUBLIC_FIELDS)
+    .populate('group', 'name');
 
   res.json({ events });
 });

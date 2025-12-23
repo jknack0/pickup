@@ -55,6 +55,8 @@ const EventSchema: Schema = new Schema(
       required: true,
       default: EventStatus.ACTIVE,
     },
+    group: { type: Schema.Types.ObjectId, ref: 'Group' },
+    isPublic: { type: Boolean, default: true },
   },
   { timestamps: true },
 );
