@@ -66,25 +66,30 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-logger.info('[Startup] Connecting to MongoDB...');
-mongoose
-  .connect(process.env.MONGODB_URI as string, {
-    serverSelectionTimeoutMS: 30000, // Increase timeout for Cloud Run cold starts
-    socketTimeoutMS: 45000,
-    retryWrites: true,
-    w: 'majority',
-  })
-  .then(() => {
+// Async function to start the server
+const startServer = async () => {
+  try {
+    logger.info('[Startup] Connecting to MongoDB...');
+    await mongoose.connect(process.env.MONGODB_URI as string, {
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      retryWrites: true,
+      w: 'majority',
+    });
     logger.info('[Startup] Connected to MongoDB');
-  })
-  .catch((err) => {
-    logger.error('[Startup] Failed to connect to MongoDB', err);
-  });
 
-logger.info(`[Startup] About to start listening on port ${port}`);
-const server = app.listen(Number(port), '0.0.0.0', () => {
-  logger.info(`[Startup] Server is now listening on http://0.0.0.0:${port}`);
-});
+    logger.info(`[Startup] About to start listening on port ${port}`);
+    server = app.listen(Number(port), '0.0.0.0', () => {
+      logger.info(`[Startup] Server is now listening on http://0.0.0.0:${port}`);
+    });
+  } catch (err) {
+    logger.error('[Startup] Failed to connect to MongoDB', err);
+    process.exit(1); // Exit effectively so Cloud Run can restart the container
+  }
+};
+
+let server: ReturnType<typeof app.listen>;
+startServer();
 
 const gracefulShutdown = () => {
   logger.info('Received shutdown signal. Closing server...');
