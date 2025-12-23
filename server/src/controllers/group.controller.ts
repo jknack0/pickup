@@ -16,6 +16,7 @@ import {
   MembershipRequestStatus,
   AuthRequest,
   USER_PUBLIC_FIELDS,
+  GROUP_DEFAULTS,
 } from '@pickup/shared';
 import { asyncHandler } from '@/utils/asyncHandler.js';
 import { AppError } from '@/middleware/error.middleware.js';
@@ -143,7 +144,7 @@ export const createGroup = asyncHandler(async (req: Request, res: Response) => {
     paymentSettings: user.stripeAccountId
       ? {
           stripeAccountId: user.stripeAccountId,
-          defaultCurrency: 'usd',
+          defaultCurrency: GROUP_DEFAULTS.CURRENCY,
         }
       : undefined,
   });
@@ -315,7 +316,7 @@ export const listMyGroups = asyncHandler(async (req: Request, res: Response) => 
  * GET /api/groups/public
  */
 export const listPublicGroups = asyncHandler(async (req: Request, res: Response) => {
-  const { search, limit = '20', offset = '0' } = req.query;
+  const { search, limit = String(GROUP_DEFAULTS.PAGE_LIMIT), offset = '0' } = req.query;
 
   const query: Record<string, unknown> = {
     visibility: GroupVisibility.PUBLIC,

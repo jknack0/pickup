@@ -10,18 +10,22 @@ jest.mock('@/models/Group.js');
 jest.mock('@/models/User.js');
 jest.mock('@/utils/logger.js');
 
-jest.mock('@pickup/shared', () => ({
-  GroupRole: { ADMIN: 'ADMIN', MEMBER: 'MEMBER', MODERATOR: 'MODERATOR' },
-  GroupVisibility: { PUBLIC: 'PUBLIC', PRIVATE: 'PRIVATE' },
-  GroupJoinPolicy: { OPEN: 'OPEN', REQUEST: 'REQUEST', INVITE_ONLY: 'INVITE_ONLY' },
-  MembershipRequestStatus: { PENDING: 'PENDING', APPROVED: 'APPROVED', REJECTED: 'REJECTED' },
-  EventType: { VOLLEYBALL: 'VOLLEYBALL' },
-  EventFormat: { OPEN_GYM: 'OPEN_GYM' },
-  EventPosition: { SETTER: 'Setter' },
-  AttendeeStatus: { YES: 'YES', NO: 'NO', MAYBE: 'MAYBE', WAITLIST: 'WAITLIST' },
-  EventStatus: { ACTIVE: 'ACTIVE', CANCELED: 'CANCELED' },
-  USER_PUBLIC_FIELDS: 'firstName lastName email',
-}));
+jest.mock('@pickup/shared', () => {
+  const actual = jest.requireActual('@pickup/shared');
+  return {
+    ...actual,
+    GroupRole: { ADMIN: 'ADMIN', MEMBER: 'MEMBER', MODERATOR: 'MODERATOR' },
+    GroupVisibility: { PUBLIC: 'PUBLIC', PRIVATE: 'PRIVATE' },
+    GroupJoinPolicy: { OPEN: 'OPEN', REQUEST: 'REQUEST', INVITE_ONLY: 'INVITE_ONLY' },
+    MembershipRequestStatus: { PENDING: 'PENDING', APPROVED: 'APPROVED', REJECTED: 'REJECTED' },
+    EventType: { VOLLEYBALL: 'VOLLEYBALL' },
+    EventFormat: { OPEN_GYM: 'OPEN_GYM' },
+    EventPosition: { SETTER: 'Setter' },
+    AttendeeStatus: { YES: 'YES', NO: 'NO', MAYBE: 'MAYBE', WAITLIST: 'WAITLIST' },
+    EventStatus: { ACTIVE: 'ACTIVE', CANCELED: 'CANCELED' },
+    USER_PUBLIC_FIELDS: 'firstName lastName email',
+  };
+});
 
 describe('Group Controller', () => {
   let mockRequest: Partial<Request> & { user?: { id: string } };

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { EventType } from './event.js';
+import { GROUP_CONSTRAINTS } from '../constants/group.js';
 
 // ============================================================================
 // ENUMS
@@ -101,11 +102,11 @@ export interface IGroupPopulated extends Omit<IGroup, 'owner' | 'members'> {
 export const CreateGroupSchema = z.object({
     name: z
         .string()
-        .min(1, 'Group name is required')
-        .max(100, 'Group name must be at most 100 characters'),
+        .min(GROUP_CONSTRAINTS.NAME_MIN_LENGTH, 'Group name is required')
+        .max(GROUP_CONSTRAINTS.NAME_MAX_LENGTH, `Group name must be at most ${GROUP_CONSTRAINTS.NAME_MAX_LENGTH} characters`),
     description: z
         .string()
-        .max(1000, 'Description must be at most 1000 characters')
+        .max(GROUP_CONSTRAINTS.DESC_MAX_LENGTH, `Description must be at most ${GROUP_CONSTRAINTS.DESC_MAX_LENGTH} characters`)
         .optional(),
     visibility: z.nativeEnum(GroupVisibility).default(GroupVisibility.PUBLIC),
     joinPolicy: z.nativeEnum(GroupJoinPolicy).default(GroupJoinPolicy.OPEN),
@@ -124,12 +125,12 @@ export type CreateGroupInput = z.infer<typeof CreateGroupSchema>;
 export const UpdateGroupSchema = z.object({
     name: z
         .string()
-        .min(1, 'Group name is required')
-        .max(100, 'Group name must be at most 100 characters')
+        .min(GROUP_CONSTRAINTS.NAME_MIN_LENGTH, 'Group name is required')
+        .max(GROUP_CONSTRAINTS.NAME_MAX_LENGTH, `Group name must be at most ${GROUP_CONSTRAINTS.NAME_MAX_LENGTH} characters`)
         .optional(),
     description: z
         .string()
-        .max(1000, 'Description must be at most 1000 characters')
+        .max(GROUP_CONSTRAINTS.DESC_MAX_LENGTH, `Description must be at most ${GROUP_CONSTRAINTS.DESC_MAX_LENGTH} characters`)
         .optional(),
     avatarUrl: z.string().url('Invalid avatar URL').optional().or(z.literal('')),
     visibility: z.nativeEnum(GroupVisibility).optional(),

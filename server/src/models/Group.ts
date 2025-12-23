@@ -6,6 +6,8 @@ import {
   GroupJoinPolicy,
   MembershipRequestStatus,
   EventType,
+  GROUP_CONSTRAINTS,
+  GROUP_DEFAULTS,
 } from '@pickup/shared';
 
 export interface IGroupDocument extends Document, Omit<IGroup, '_id'> {
@@ -43,7 +45,7 @@ const MembershipRequestSchema = new Schema(
 const GroupPaymentSettingsSchema = new Schema(
   {
     defaultPrice: { type: Number },
-    defaultCurrency: { type: String, default: 'usd' },
+    defaultCurrency: { type: String, default: GROUP_DEFAULTS.CURRENCY },
     stripeAccountId: { type: String }, // Synced from owner's User.stripeAccountId
   },
   { _id: false },
@@ -51,8 +53,8 @@ const GroupPaymentSettingsSchema = new Schema(
 
 const GroupSchema: Schema = new Schema(
   {
-    name: { type: String, required: true, maxlength: 100 },
-    description: { type: String, maxlength: 1000 },
+    name: { type: String, required: true, maxlength: GROUP_CONSTRAINTS.NAME_MAX_LENGTH },
+    description: { type: String, maxlength: GROUP_CONSTRAINTS.DESC_MAX_LENGTH },
     avatarUrl: { type: String },
     owner: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     members: [GroupMemberSchema],
